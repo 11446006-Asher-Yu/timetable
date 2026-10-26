@@ -3,7 +3,7 @@
 以下指令中的 `<帳號>` 請換成你的 PythonAnywhere 使用者名稱，網站網址會是 `https://<帳號>.pythonanywhere.com`。
 
 > ✅ 本文件已在 2026/10/26 實際部署驗證過：帳號 `Asher`，網址 https://asher.pythonanywhere.com，Python 3.13。
-> 仍標示「待確認」的只剩 Gmail 寄信。
+> Gmail 寄信也已確認可用：免費方案可以連到 Gmail，忘記密碼信能寄到並重設密碼。
 
 ## 目前的部署
 
@@ -46,7 +46,26 @@ python -c "from django.core.management.utils import get_random_secret_key as g; 
 
 最後的 `grep` 只會列出金鑰以外的設定，方便確認內容。
 
-要測試忘記密碼寄信時，再用 `nano .env` 填入 `EMAIL_HOST_USER`（Gmail 帳號）和 `EMAIL_HOST_PASSWORD`（Google 帳戶的「應用程式密碼」）。存檔：`Ctrl+O` → `Enter` → `Ctrl+X`，然後到 Web 頁面按 Reload。
+### 設定寄信（忘記密碼用）
+
+1. 準備寄件用的 Gmail 帳號（建議另外申請），在 Google 帳戶開啟**兩步驟驗證**。
+2. 到 `https://myaccount.google.com/apppasswords` 產生「應用程式密碼」（16 個字母，只顯示一次）。
+3. `nano ~/timetable/.env`，填入下面兩行（等號前後不加空格、不加引號，密碼**拿掉空格**）。存檔：`Ctrl+O` → `Enter` → `Ctrl+X`。
+   ```
+   EMAIL_HOST_USER=寄件用的Gmail地址
+   EMAIL_HOST_PASSWORD=16碼應用程式密碼
+   ```
+4. 先在 console 寄一封測試信，印出 `1` 就是成功（收件地址要加引號、放在中括號裡）：
+   ```bash
+   cd ~/timetable && workon timetable-venv && python manage.py shell -c "from django.core.mail import send_mail; print(send_mail('課表網站測試信', '寄信設定成功！', None, ['收件信箱']))"
+   ```
+5. **到 Web 頁面按 Reload。** 網站只在重新載入時讀取 `.env`；沒按的話，console 測試信寄得出去，但網站的忘記密碼信不會寄出。
+
+| 錯誤訊息包含 | 可能原因 |
+|---|---|
+| `Username and Password not accepted` | 帳號打錯、密碼留著空格，或填了 Gmail 登入密碼而非應用程式密碼 |
+| `NameError: name '...' is not defined` | 測試指令的收件地址少了引號 |
+| 測試信成功、網站的信沒寄出 | 改完 `.env` 沒按 Reload |
 
 ## 3. 建立資料庫、匯入節次、整理靜態檔
 
@@ -99,8 +118,9 @@ application = get_wsgi_application()
 - [ ] 「上課中」標示時間正確
 - [ ] 手機開啟，畫面是星期分頁
 - [ ] 匯出圖片、列印
-- [ ] 開啟分享，用無痕視窗開分享連結；**分享網址開頭要是 `https://`**（待確認）
-- [ ] 忘記密碼（有填 Gmail 時）：確認信件能寄到（待確認：免費方案能否連到 Gmail 寄信）
+- [x] 開啟分享，用無痕視窗開分享連結；**分享網址開頭要是 `https://`**（2026/10/26 已確認）
+- [x] 忘記密碼：收到重設密碼信，也能設定新密碼（2026/10/26 已確認）
+  - `.env` 的 `EMAIL_HOST_USER` 留白，或改了 `.env` 卻沒按 Reload 時，**不會真的寄信**，信件只會寫進 `/var/log/<帳號>.pythonanywhere.com.server.log`，畫面仍會顯示「請查收信件」。
 - [ ] `https://<帳號>.pythonanywhere.com/admin/` 能用管理員帳號登入
 
 2026/10/26 部署後已確認：首頁樣式正常、http 自動轉 https、登入／註冊／忘記密碼頁正常、未登入開課表會轉到登入頁、不存在的分享連結顯示中文 404、後台登入頁正常。
@@ -125,5 +145,6 @@ python manage.py collectstatic --noinput
 ## 7. 免費方案注意事項
 
 - **每個月要延長一次**：至少每個月登入一次，到 Web 頁面按「**Run until 1 month from today**」，否則網站會停用。停用前一週 PythonAnywhere 會寄信提醒。目前停用日是 **2026/11/26**，**老師評分前記得確認還沒到期。**
-- 免費方案對外連線有限制，寄信（Gmail）是否可用要實測（待確認）。
+- 免費方案對外連線有限制，但連到 Gmail（smtp.gmail.com）寄信實測可用。
+- 改過伺服器上的 `.env` 後，一定要到 Web 頁面按 **Reload** 才會生效。
 - 檔案空間上限 512 MB，CPU 每天 100 秒；本專案只用到很小一部分。
