@@ -8,32 +8,79 @@
     <h1>我的課表</h1>
     <a href="{% url 'course_create' %}" class="button">＋ 新增課程</a>
   </div>
-  <p class="summary">共 {{ courses|length }} 門課，總學分 {{ total_credits }}</p>
 
-  {# 課表格子將於 10/30 實作，目前先以清單顯示 #}
-  {% if courses %}
-    <ul class="course-list">
-      {% for course in courses %}
-        <li class="course-item" style="border-left-color: {{ course.display_color }}">
-          <div class="course-info">
-            <strong>{{ course.name }}</strong>
-            <span class="tag" style="background: {{ course.display_color }}">{{ course.get_category_display }}</span>
-            <span class="muted">{{ course.credits }} 學分</span>
-            <div class="muted">
-              {% for time in course.times.all %}{{ time }}{% if not forloop.last %}、{% endif %}{% endfor %}
-              {% if course.classroom %}｜{{ course.classroom }}{% endif %}
-              {% if course.teacher %}｜{{ course.teacher }}{% endif %}
-            </div>
-          </div>
-          <div class="course-actions">
-            <a href="{% url 'course_update' course.pk %}">修改</a>
-            <a href="{% url 'course_delete' course.pk %}" class="danger-link">刪除</a>
-          </div>
-        </li>
+  <div class="credit-summary">
+    <span class="credit-total">總學分 <strong>{{ total_credits }}</strong></span>
+    {% for category in categories %}
+      {% if category.credits %}<span class="credit-sub">{{ category.label }} {{ category.credits }}</span>{% endif %}
+    {% endfor %}
+  </div>
+
+  <ul class="legend" aria-label="類別圖例">
+    {% for category in categories %}
+      <li><span class="legend-swatch" style="--course-color: {{ category.color }}"></span>{{ category.label }}</li>
+    {% endfor %}
+  </ul>
+
+  <div class="timetable-scroll">
+    <div class="timetable" style="--day-count: {{ grid.column_count }}">
+      <div class="tt-corner" style="grid-row: 1; grid-column: 1">節次</div>
+      {% for day in grid.weekdays %}
+        <div class="tt-day" style="grid-row: 1; grid-column: {{ day.column }}">{{ day.label }}</div>
       {% endfor %}
-    </ul>
-  {% else %}
+
+      {% for item in grid.periods %}
+        <div class="tt-period" style="grid-row: {{ item.row }}; grid-column: 1">
+          <span class="tt-period-number">{{ item.period.number }}</span>
+          <span class="tt-period-time">{{ item.period.start_time|time:'H:i' }}</span>
+        </div>
+      {% endfor %}
+
+      {% for cell in grid.cells %}
+        <div class="tt-cell" style="grid-row: {{ cell.row }}; grid-column: {{ cell.column }}"></div>
+      {% endfor %}
+
+      {# 點課程看詳細資料的視窗於 10/31 實作，目前先連到修改頁 #}
+      {% for block in grid.blocks %}
+        <a class="tt-course"
+           href="{% url 'course_update' block.course.pk %}"
+           style="grid-row: {{ block.row }} / span {{ block.span }}; grid-column: {{ block.column }}; --course-color: {{ block.course.display_color }}"
+           title="{{ block.course.name }}｜{{ block.time }}">
+          <span class="tt-course-name">{{ block.course.name }}</span>
+          {% if block.course.classroom %}<span class="tt-course-room">{{ block.course.classroom }}</span>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if not courses %}
     <p class="empty">還沒有任何課程，按「新增課程」開始建立你的課表。</p>
   {% endif %}
 </section>
+
+{% if courses %}
+<section class="card course-list-card">
+  <h2>課程清單</h2>
+  <ul class="course-list">
+    {% for course in courses %}
+      <li class="course-item" style="border-left-color: {{ course.display_color }}">
+        <div class="course-info">
+          <strong>{{ course.name }}</strong>
+          <span class="tag" style="background: {{ course.display_color }}">{{ course.get_category_display }}</span>
+          <span class="muted">{{ course.credits }} 學分</span>
+          <div class="muted">
+            {% for time in course.times.all %}{{ time }}{% if not forloop.last %}、{% endif %}{% endfor %}
+            {% if course.classroom %}｜{{ course.classroom }}{% endif %}
+            {% if course.teacher %}｜{{ course.teacher }}{% endif %}
+          </div>
+        </div>
+        <div class="course-actions">
+          <a href="{% url 'course_update' course.pk %}">修改</a>
+          <a href="{% url 'course_delete' course.pk %}" class="danger-link">刪除</a>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
 {% endblock %}

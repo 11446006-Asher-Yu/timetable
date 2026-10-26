@@ -132,7 +132,7 @@ class CourseCrudTests(TestCase):
         self.assertRedirects(response, reverse('timetable'))
         course = Course.objects.get(owner=self.user)
         self.assertEqual(course.times.count(), 2)
-        self.assertContains(self.client.get(reverse('timetable')), '總學分 3')
+        self.assertEqual(self.client.get(reverse('timetable')).context['total_credits'], 3)
 
     def test_create_requires_at_least_one_time(self):
         response = self.client.post(reverse('course_create'), self.course_data([]))
@@ -175,3 +175,53 @@ class CourseCrudTests(TestCase):
         self.assertEqual(self.client.post(reverse('course_delete', args=[course.pk])).status_code, 404)
         self.assertNotContains(self.client.get(reverse('timetable')), '別人的課')
         self.assertTrue(Course.objects.filter(pk=course.pk).exists())
+
+
+class TimetableGridTests(TestCase):
+    fixtures = ['periods']
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user('student', password='pw-12345678')
+        self.client.force_login(self.user)
+
+    def add_course(self, name, category, credits, *times):
+        course = Course.objects.create(owner=self.user, name=name, category=category, credits=credits)
+        for weekday, start, end in times:
+            CourseTime.objects.create(
+                course=course, weekday=weekday,
+                start_period=Period.objects.get(number=start),
+                end_period=Period.objects.get(number=end),
+            )
+        return course
+
+    def test_empty_grid_shows_weekdays_and_eight_periods(self):
+        grid = self.client.get(reverse('timetable')).context['grid']
+        self.assertEqual([d['label'] for d in grid['weekdays']], ['一', '二', '三', '四', '五'])
+        self.assertEqual(len(grid['periods']), 8)
+        self.assertEqual(len(grid['cells']), 40)
+        self.assertEqual(grid['blocks'], [])
+
+    def test_block_position_and_span(self):
+        self.add_course('統計學', 'required', 3, (3, 2, 4))
+        block = self.client.get(reverse('timetable')).context['grid']['blocks'][0]
+        # 星期三是第 4 欄（第 1 欄是節次）；第 2 節是第 3 列（第 1 列是標題）
+        self.assertEqual((block['column'], block['row'], block['span']), (4, 3, 3))
+
+    def test_weekend_and_late_periods_extend_grid(self):
+        self.add_course('日文', 'other', 2, (6, 2, 3), (1, 9, 10))
+        grid = self.client.get(reverse('timetable')).context['grid']
+        self.assertEqual(grid['weekdays'][-1]['label'], '六')
+        self.assertEqual(grid['column_count'], 6)
+        self.assertEqual(len(grid['periods']), 10)
+
+    def test_total_and_category_subtotals(self):
+        self.add_course('網頁程式設計', 'required', 3, (2, 1, 2), (4, 5, 5))
+        self.add_course('統計學', 'required', 3, (3, 2, 4))
+        self.add_course('行銷管理', 'elective', 2, (1, 6, 7))
+        response = self.client.get(reverse('timetable'))
+        self.assertEqual(response.context['total_credits'], 8)
+        subtotals = {c['label']: c['credits'] for c in response.context['categories']}
+        self.assertEqual(subtotals['必修'], 6)
+        self.assertEqual(subtotals['選修'], 2)
+        self.assertEqual(subtotals['通識'], 0)
+        self.assertEqual(len(response.context['grid']['blocks']), 4)
