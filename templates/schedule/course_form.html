@@ -25,6 +25,19 @@
       <button type="button" id="add-time" class="button button-outline button-small-outline">＋ 再加一個時段</button>
     </fieldset>
 
+    {% if conflicts %}
+      <div class="conflict-warning" role="alert">
+        <p><strong>⚠ 這門課和其他課程衝堂：</strong></p>
+        <ul>
+          {% for conflict in conflicts %}<li>{{ conflict }}</li>{% endfor %}
+        </ul>
+        <label class="conflict-confirm">
+          <input type="checkbox" name="allow_conflict" value="1">
+          我知道衝堂，仍要儲存（例如旁聽、隔週上課）
+        </label>
+      </div>
+    {% endif %}
+
     <div class="form-actions">
       <a href="{% url 'timetable' %}" class="button button-outline">取消</a>
       <button type="submit" class="button">儲存</button>

@@ -429,6 +429,60 @@ a {
   font-size: 0.75rem;
 }
 
+/* ===== 衝堂 ===== */
+/* 同一格內左右並排：寬度依欄數平分，左邊界依第幾欄位移（百分比以格子寬度計算） */
+.tt-course.is-conflict {
+  justify-self: start;
+  width: calc(100% / var(--lanes) - 6px);
+  margin-left: calc(100% / var(--lanes) * var(--lane) + 3px);
+  border: 2px dashed var(--color-error);
+  border-left: 4px solid var(--course-color);
+}
+
+.conflict-notice,
+.conflict-warning {
+  margin: 12px 0;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+.conflict-warning p,
+.conflict-warning ul {
+  margin: 0 0 8px;
+}
+
+.conflict-warning ul {
+  padding-left: 20px;
+  color: var(--color-text);
+}
+
+.conflict-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.m-course.is-conflict {
+  border-top: 2px dashed var(--color-error);
+  border-right: 2px dashed var(--color-error);
+  border-bottom: 2px dashed var(--color-error);
+}
+
+.conflict-badge {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--color-error);
+  color: #FFFFFF;
+  font-size: 0.7rem;
+  vertical-align: middle;
+}
+
 /* ===== 今天與上課中 ===== */
 .tt-day.is-today {
   background: var(--color-primary);

@@ -138,6 +138,13 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # 部署時 collectstatic 的輸出位置
 
+# 正式環境的靜態檔名會加上內容雜湊（例如 style.3f2a1c.css），檔案一改網址就變，
+# 瀏覽器不會繼續用舊的快取。開發時（DEBUG=True）仍用原檔名。
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'schedule.storage.LenientManifestStaticFilesStorage'},
+}
+
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration

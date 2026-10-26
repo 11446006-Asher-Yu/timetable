@@ -1,5 +1,9 @@
 {# 課表本體，「我的課表」與分享頁共用。需要 owner、grid、categories、total_credits、can_edit #}
 
+{% if can_edit and grid.conflict_count %}
+  <p class="conflict-notice">⚠ 課表中有 {{ grid.conflict_count }} 個時段衝堂，衝堂的課程會並排顯示並加上虛線框。</p>
+{% endif %}
+
 {# 匯出圖片與列印的範圍 #}
 <div id="export-area">
   <h2 class="export-title">{{ owner.username }} 的課表</h2>
@@ -43,14 +47,15 @@
       {# 有 JavaScript 時點擊會開啟詳細資料視窗；沒有時，擁有者連到修改頁 #}
       {% for block in grid.blocks %}
         {# --course-tint：類別色加上 22% 不透明度（十六進位 38），當作方塊底色 #}
-        <a class="tt-course"
+        {# 衝堂時以 --lane／--lanes 在同一格內左右並排 #}
+        <a class="tt-course{% if block.conflict %} is-conflict{% endif %}"
            href="{% if can_edit %}{% url 'course_update' block.course.pk %}{% else %}#course-{{ block.course.pk }}{% endif %}"
            data-course-id="{{ block.course.pk }}"
            data-weekday="{{ block.time.weekday }}"
            data-start="{{ block.time.start_period.number }}"
            data-end="{{ block.time.end_period.number }}"
-           style="grid-row: {{ block.row }} / span {{ block.span }}; grid-column: {{ block.column }}; --course-color: {{ block.course.display_color }}; --course-tint: {{ block.course.display_color }}38"
-           title="{{ block.course.name }}｜{{ block.time }}">
+           style="grid-row: {{ block.row }} / span {{ block.span }}; grid-column: {{ block.column }}; --course-color: {{ block.course.display_color }}; --course-tint: {{ block.course.display_color }}38; --lane: {{ block.lane }}; --lanes: {{ block.lanes }}"
+           title="{{ block.course.name }}｜{{ block.time }}{% if block.conflict %}｜衝堂{% endif %}">
           <span class="tt-course-name">{{ block.course.name }}</span>
           {% if block.course.classroom %}<span class="tt-course-room">{{ block.course.classroom }}</span>{% endif %}
           <span class="now-badge">上課中</span>
@@ -72,7 +77,7 @@
     <div class="day-panel" id="day-panel-{{ day.value }}" role="tabpanel" data-weekday="{{ day.value }}">
       <h3 class="day-panel-title">星期{{ day.label }}</h3>
       {% for block in day.blocks %}
-        <a class="m-course"
+        <a class="m-course{% if block.conflict %} is-conflict{% endif %}"
            href="{% if can_edit %}{% url 'course_update' block.course.pk %}{% else %}#course-{{ block.course.pk }}{% endif %}"
            data-course-id="{{ block.course.pk }}"
            data-weekday="{{ block.time.weekday }}"
@@ -83,7 +88,7 @@
             {% if block.span == 1 %}第 {{ block.time.start_period.number }} 節{% else %}第 {{ block.time.start_period.number }}–{{ block.time.end_period.number }} 節{% endif %}
             {{ block.time.start_period.start_time|time:'H:i' }}–{{ block.time.end_period.end_time|time:'H:i' }}
           </span>
-          <span class="m-course-name">{{ block.course.name }} <span class="now-badge">上課中</span></span>
+          <span class="m-course-name">{{ block.course.name }} <span class="now-badge">上課中</span>{% if block.conflict %} <span class="conflict-badge">衝堂</span>{% endif %}</span>
           {% if block.course.classroom %}<span class="m-course-room">{{ block.course.classroom }}</span>{% endif %}
         </a>
       {% empty %}

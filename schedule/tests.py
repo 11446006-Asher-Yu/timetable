@@ -348,3 +348,74 @@ class PasswordResetTests(TestCase):
 
     def test_login_page_links_to_reset(self):
         self.assertContains(self.client.get(reverse('login')), reverse('password_reset'))
+
+
+class ConflictTests(TestCase):
+    fixtures = ['periods']
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user('student', password='pw-12345678')
+        self.client.force_login(self.user)
+        self.stats = self.add_course('統計學', (3, 2, 4))
+
+    def add_course(self, name, *times, owner=None):
+        course = Course.objects.create(owner=owner or self.user, name=name)
+        for weekday, start, end in times:
+            CourseTime.objects.create(
+                course=course, weekday=weekday,
+                start_period=Period.objects.get(number=start),
+                end_period=Period.objects.get(number=end),
+            )
+        return course
+
+    def post_course(self, url, name, weekday, start, end, **extra):
+        data = {
+            'name': name, 'teacher': '', 'classroom': '', 'credits': 2,
+            'category': 'elective', 'color': '', 'note': '',
+            'times-TOTAL_FORMS': 1, 'times-INITIAL_FORMS': 0,
+            'times-MIN_NUM_FORMS': 1, 'times-MAX_NUM_FORMS': 1000,
+            'times-0-weekday': weekday,
+            'times-0-start_period': Period.objects.get(number=start).pk,
+            'times-0-end_period': Period.objects.get(number=end).pk,
+        }
+        data.update(extra)
+        return self.client.post(url, data)
+
+    def test_conflict_shows_warning_and_does_not_save(self):
+        response = self.post_course(reverse('course_create'), '行銷管理', 3, 4, 5)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '與「統計學」（星期三 第 2–4 節）衝堂')
+        self.assertFalse(Course.objects.filter(name='行銷管理').exists())
+
+    def test_conflict_saved_after_confirm(self):
+        response = self.post_course(reverse('course_create'), '行銷管理', 3, 4, 5, allow_conflict='1')
+        self.assertRedirects(response, reverse('timetable'))
+        self.assertTrue(Course.objects.filter(name='行銷管理').exists())
+
+    def test_no_conflict_on_other_day_or_adjacent_period(self):
+        self.assertRedirects(self.post_course(reverse('course_create'), '英文', 3, 5, 6), reverse('timetable'))
+        self.assertRedirects(self.post_course(reverse('course_create'), '日文', 2, 2, 4), reverse('timetable'))
+
+    def test_editing_course_does_not_conflict_with_itself(self):
+        url = reverse('course_update', args=[self.stats.pk])
+        data = {'times-INITIAL_FORMS': 1, 'times-0-id': self.stats.times.get().pk}
+        response = self.post_course(url, '統計學', 3, 3, 4, **data)
+        self.assertRedirects(response, reverse('timetable'))
+
+    def test_other_users_courses_do_not_conflict(self):
+        other = get_user_model().objects.create_user('other', password='pw-12345678')
+        self.add_course('別人的課', (1, 1, 2), owner=other)
+        self.assertRedirects(self.post_course(reverse('course_create'), '英文', 1, 1, 1), reverse('timetable'))
+
+    def test_grid_places_conflicting_blocks_side_by_side(self):
+        self.add_course('行銷管理', (3, 4, 5))
+        self.add_course('英文', (3, 5, 6))
+        self.add_course('體育', (1, 1, 1))
+        grid = self.client.get(reverse('timetable')).context['grid']
+        lanes = {b['course'].name: (b['lane'], b['lanes'], b['conflict']) for b in grid['blocks']}
+        # 統計學 2–4、行銷 4–5、英文 5–6 連成一群；英文可以放回第一欄
+        self.assertEqual(lanes['統計學'], (0, 2, True))
+        self.assertEqual(lanes['行銷管理'], (1, 2, True))
+        self.assertEqual(lanes['英文'], (0, 2, True))
+        self.assertEqual(lanes['體育'], (0, 1, False))
+        self.assertEqual(grid['conflict_count'], 3)

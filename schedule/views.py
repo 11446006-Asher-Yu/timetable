@@ -6,6 +6,7 @@ from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
+from .conflicts import assign_lanes, find_conflicts
 from .forms import CourseForm, CourseTimeFormSet, SignUpForm
 from .models import Course, CourseTime, Period, ShareLink
 
@@ -59,6 +60,7 @@ def build_grid(courses):
                 'row': row_of[time.start_period.number],
                 'span': time.end_period.number - time.start_period.number + 1,
             })
+    assign_lanes(blocks)
 
     # 手機版依星期分頁，每天的課依開始節次排序
     days = [
@@ -83,6 +85,7 @@ def build_grid(courses):
         ],
         'blocks': blocks,
         'column_count': len(weekdays),
+        'conflict_count': sum(1 for block in blocks if block['conflict']),
     }
 
 
@@ -167,16 +170,25 @@ def shared_timetable(request, token):
 def _edit_course(request, course):
     """新增與修改共用：課程本體與上課時段要一起驗證、一起儲存。"""
     is_new = course.pk is None
+    conflicts = []
     if request.method == 'POST':
         form = CourseForm(request.POST, instance=course)
         formset = CourseTimeFormSet(request.POST, instance=course)
         if form.is_valid() and formset.is_valid():
-            with transaction.atomic():
-                course = form.save()
-                formset.instance = course
-                formset.save()
-            messages.success(request, f'已{"新增" if is_new else "更新"}「{course.name}」。')
-            return redirect('timetable')
+            new_times = [
+                (data['weekday'], data['start_period'].number, data['end_period'].number)
+                for data in formset.cleaned_data
+                if data and not data.get('DELETE')
+            ]
+            conflicts = find_conflicts(course.owner, new_times, exclude_course=course)
+            # 衝堂不擋下，但要使用者勾選確認後才儲存（例如旁聽、隔週上課）
+            if not conflicts or request.POST.get('allow_conflict'):
+                with transaction.atomic():
+                    course = form.save()
+                    formset.instance = course
+                    formset.save()
+                messages.success(request, f'已{"新增" if is_new else "更新"}「{course.name}」。')
+                return redirect('timetable')
     else:
         form = CourseForm(instance=course)
         formset = CourseTimeFormSet(instance=course)
@@ -184,6 +196,7 @@ def _edit_course(request, course):
         'form': form,
         'formset': formset,
         'is_new': is_new,
+        'conflicts': conflicts,
     })
 
 
