@@ -11,6 +11,13 @@
   --color-success-bg: #DAFBE1;
   --color-error-bg: #FFEBE9;
   --radius: 8px;
+
+  /* 動畫：時間短、幅度小。ease-out 是快速起步再柔和減速，spring 會在終點輕微回彈 */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration: 250ms;
+  --duration-slow: 400ms;
 }
 
 * {
@@ -36,14 +43,21 @@ a {
 }
 
 /* ===== 頁首 ===== */
+/* 半透明毛玻璃頁首，捲動時固定在上方 */
 .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 16px;
-  background: var(--color-card);
-  border-bottom: 1px solid var(--color-border);
+  height: 58px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.72);
+  border-bottom: 1px solid rgba(208, 215, 222, 0.6);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
 }
 
 .brand {
@@ -555,7 +569,7 @@ a {
 
 .mobile-days.is-tabbed .day-tabs {
   position: sticky;
-  top: 0;
+  top: 66px; /* 頁首高度 58px 再留一點空隙 */
   z-index: 2;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(36px, 1fr));
@@ -580,6 +594,31 @@ a {
   background: var(--color-primary);
   color: #FFFFFF;
   font-weight: 600;
+}
+
+/* 有滑動膠囊時，選取底色改由膠囊負責 */
+.day-tabs.has-indicator .day-tab {
+  position: relative;
+  z-index: 1;
+  transition: color var(--duration) var(--ease-out);
+}
+
+.day-tabs.has-indicator .day-tab.is-selected {
+  background: transparent;
+}
+
+.day-tab-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  border-radius: 6px;
+  background: var(--color-primary);
+  box-shadow: 0 2px 6px rgba(59, 111, 182, 0.35);
+}
+
+.day-tab-indicator.is-ready {
+  transition: transform var(--duration-slow) var(--ease-spring), width var(--duration-slow) var(--ease-spring);
 }
 
 .day-panel-title {
@@ -870,6 +909,147 @@ a {
   color: var(--color-muted);
 }
 
+/* ===== 動畫與互動 ===== */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+@keyframes block-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+}
+
+@keyframes message-in {
+  from { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--course-color) 50%, transparent); }
+  50% { box-shadow: 0 0 0 4px transparent; }
+}
+
+.container {
+  animation: page-in var(--duration-slow) var(--ease-out) backwards;
+}
+
+/* 按鈕：滑過時柔和變色，按下時輕微縮小 */
+.button,
+.link-button,
+.day-tab,
+.dialog-close {
+  transition:
+    background-color var(--duration) var(--ease-out),
+    color var(--duration) var(--ease-out),
+    box-shadow var(--duration) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.button:hover {
+  box-shadow: 0 2px 8px rgba(59, 111, 182, 0.25);
+}
+
+.button:active,
+.day-tab:active,
+.dialog-close:active {
+  transform: scale(0.97);
+}
+
+.button:focus-visible,
+.day-tab:focus-visible,
+.tt-course:focus-visible,
+.m-course:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea,
+.time-row select {
+  transition: border-color var(--duration) var(--ease-out), box-shadow var(--duration) var(--ease-out);
+}
+
+.message {
+  animation: message-in var(--duration-slow) var(--ease-out) backwards;
+  transition: opacity var(--duration-slow) var(--ease-out), transform var(--duration-slow) var(--ease-out);
+}
+
+.message.is-leaving {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* 課程方塊依序淡入（--i 為順序，最多延遲 0.4 秒），滑過時浮起、按下時回彈。
+   用 backwards 而不是 both：動畫結束後交還 transform，滑過效果才會生效 */
+.tt-course {
+  animation: block-in var(--duration-slow) var(--ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), 20) * 20ms);
+  transition:
+    transform var(--duration) var(--ease-spring),
+    box-shadow var(--duration) var(--ease-out);
+}
+
+.tt-course:hover,
+.m-course:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.tt-course:active,
+.m-course:active {
+  transform: scale(0.97);
+  transition-duration: var(--duration-fast);
+}
+
+.m-course {
+  transition:
+    transform var(--duration) var(--ease-spring),
+    box-shadow var(--duration) var(--ease-out);
+}
+
+.is-current .now-badge {
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+/* 視窗背景模糊淡入；關閉時由 JavaScript 加上 is-closing */
+.course-dialog[open]::backdrop {
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  animation: fade-in var(--duration) var(--ease-out);
+}
+
+.course-dialog.is-closing::backdrop {
+  animation: fade-out var(--duration-fast) ease-in forwards;
+}
+
+/* 系統設定「減少動態效果」時，關掉所有動畫 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  .course-dialog::backdrop {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 匯出圖片時 html2canvas 會複製頁面，動畫會從頭播放，必須關掉才不會拍到半透明的方塊 */
+.is-exporting *,
+.is-exporting *::before,
+.is-exporting *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
 /* ===== 手機版 ===== */
 @media (max-width: 600px) {
   .nav-user {
@@ -935,10 +1115,12 @@ a {
 }
 
 @media print {
-  /* 讓類別底色、色條照實印出 */
+  /* 讓類別底色、色條照實印出；動畫一律關閉 */
   * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    animation: none !important;
+    transition: none !important;
   }
 
   body {

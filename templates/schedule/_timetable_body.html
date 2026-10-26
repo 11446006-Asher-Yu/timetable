@@ -54,7 +54,7 @@
            data-weekday="{{ block.time.weekday }}"
            data-start="{{ block.time.start_period.number }}"
            data-end="{{ block.time.end_period.number }}"
-           style="grid-row: {{ block.row }} / span {{ block.span }}; grid-column: {{ block.column }}; --course-color: {{ block.course.display_color }}; --course-tint: {{ block.course.display_color }}38; --lane: {{ block.lane }}; --lanes: {{ block.lanes }}"
+           style="grid-row: {{ block.row }} / span {{ block.span }}; grid-column: {{ block.column }}; --course-color: {{ block.course.display_color }}; --course-tint: {{ block.course.display_color }}38; --lane: {{ block.lane }}; --lanes: {{ block.lanes }}; --i: {{ forloop.counter0 }}"
            title="{{ block.course.name }}｜{{ block.time }}{% if block.conflict %}｜衝堂{% endif %}">
           <span class="tt-course-name">{{ block.course.name }}</span>
           {% if block.course.classroom %}<span class="tt-course-room">{{ block.course.classroom }}</span>{% endif %}

@@ -419,3 +419,11 @@ class ConflictTests(TestCase):
         self.assertEqual(lanes['英文'], (0, 2, True))
         self.assertEqual(lanes['體育'], (0, 1, False))
         self.assertEqual(grid['conflict_count'], 3)
+
+
+class StaticStorageTests(TestCase):
+    def test_missing_static_file_falls_back_to_original_name(self):
+        from django.contrib.staticfiles.storage import staticfiles_storage
+
+        # 還沒跑 collectstatic 的檔案不能讓頁面出錯，退回原檔名即可
+        self.assertEqual(staticfiles_storage.stored_name('js/not-collected.js'), 'js/not-collected.js')

@@ -60,6 +60,8 @@ def build_grid(courses):
                 'row': row_of[time.start_period.number],
                 'span': time.end_period.number - time.start_period.number + 1,
             })
+    # 依星期、節次排序：淡入動畫會由左上往右下依序出現
+    blocks.sort(key=lambda b: (b['time'].weekday, b['time'].start_period.number))
     assign_lanes(blocks)
 
     # 手機版依星期分頁，每天的課依開始節次排序
