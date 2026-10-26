@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}刪除課程｜線上個人課表{% endblock %}
+
+{% block content %}
+<section class="card auth-card">
+  <h1>刪除課程</h1>
+  <p>確定要刪除「<strong>{{ course.name }}</strong>」嗎？這門課的所有上課時段都會一起刪除，而且無法復原。</p>
+  <form method="post" class="form-actions">
+    {% csrf_token %}
+    <a href="{% url 'timetable' %}" class="button button-outline">取消</a>
+    <button type="submit" class="button button-danger">確定刪除</button>
+  </form>
+</section>
+{% endblock %}

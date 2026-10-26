@@ -1,0 +1,13 @@
+{# 一列上課時段；新增列時由 JavaScript 複製 empty_form #}
+<div class="time-row">
+  {% for hidden in time_form.hidden_fields %}{{ hidden }}{% endfor %}
+  <label class="time-part">{{ time_form.weekday.label }} {{ time_form.weekday }}</label>
+  <label class="time-part">從 {{ time_form.start_period }}</label>
+  <label class="time-part">到 {{ time_form.end_period }}</label>
+  {# 勾選 DELETE 後由 JavaScript 隱藏整列；不用 JavaScript 時也能直接勾選 #}
+  <label class="time-delete">{{ time_form.DELETE }} 刪除</label>
+  {% for error in time_form.non_field_errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+  {% for field in time_form.visible_fields %}
+    {% for error in field.errors %}<p class="field-error">{{ field.label }}：{{ error }}</p>{% endfor %}
+  {% endfor %}
+</div>

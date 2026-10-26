@@ -4,8 +4,36 @@
 
 {% block content %}
 <section class="card">
-  <h1>我的課表</h1>
-  {# 課表格子將於 10/30 實作 #}
-  <p>目前共有 {{ courses|length }} 門課程。課表畫面建置中。</p>
+  <div class="page-heading">
+    <h1>我的課表</h1>
+    <a href="{% url 'course_create' %}" class="button">＋ 新增課程</a>
+  </div>
+  <p class="summary">共 {{ courses|length }} 門課，總學分 {{ total_credits }}</p>
+
+  {# 課表格子將於 10/30 實作，目前先以清單顯示 #}
+  {% if courses %}
+    <ul class="course-list">
+      {% for course in courses %}
+        <li class="course-item" style="border-left-color: {{ course.display_color }}">
+          <div class="course-info">
+            <strong>{{ course.name }}</strong>
+            <span class="tag" style="background: {{ course.display_color }}">{{ course.get_category_display }}</span>
+            <span class="muted">{{ course.credits }} 學分</span>
+            <div class="muted">
+              {% for time in course.times.all %}{{ time }}{% if not forloop.last %}、{% endif %}{% endfor %}
+              {% if course.classroom %}｜{{ course.classroom }}{% endif %}
+              {% if course.teacher %}｜{{ course.teacher }}{% endif %}
+            </div>
+          </div>
+          <div class="course-actions">
+            <a href="{% url 'course_update' course.pk %}">修改</a>
+            <a href="{% url 'course_delete' course.pk %}" class="danger-link">刪除</a>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">還沒有任何課程，按「新增課程」開始建立你的課表。</p>
+  {% endif %}
 </section>
 {% endblock %}

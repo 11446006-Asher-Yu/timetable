@@ -184,21 +184,179 @@ a {
   font-weight: 600;
 }
 
-.form-field input {
+.form-field input,
+.form-field select,
+.form-field textarea,
+.time-row select {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+  background: #FFFFFF;
   font: inherit;
 }
 
-.form-field input:focus {
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus,
+.time-row select:focus {
   outline: 2px solid var(--color-primary);
   border-color: transparent;
 }
 
-.has-error input {
+.has-error input,
+.has-error select,
+.has-error textarea {
   border-color: var(--color-error);
+}
+
+.has-color-picker {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 8px;
+}
+
+.has-color-picker label,
+.has-color-picker .field-error,
+.has-color-picker .help-text {
+  grid-column: 1 / -1;
+}
+
+.form-field .color-picker {
+  width: 48px;
+  height: 42px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+/* ===== 課程表單 ===== */
+.form-card {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.time-fieldset {
+  margin: 0 0 16px;
+  padding: 12px 16px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.time-fieldset legend {
+  padding: 0 4px;
+  font-weight: 600;
+}
+
+.time-row {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1.3fr auto;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.time-row .field-error {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.time-row.is-deleted .time-part {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+.time-part {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.time-delete {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-error);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.button-small-outline {
+  padding: 6px 14px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.button-danger {
+  border-color: var(--color-error);
+  background: var(--color-error);
+}
+
+.button-danger:hover {
+  background: #A40E26;
+}
+
+/* ===== 課程清單（課表格子完成前的暫時版面） ===== */
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.page-heading h1 {
+  margin: 0;
+}
+
+.summary,
+.muted,
+.empty {
+  color: var(--color-muted);
+}
+
+.course-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.course-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-left: 6px solid;
+  border-radius: var(--radius);
+}
+
+.course-info strong {
+  margin-right: 8px;
+}
+
+.tag {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 0 8px;
+  border-radius: 999px;
+  color: #FFFFFF;
+  font-size: 0.8rem;
+}
+
+.course-actions {
+  display: flex;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.danger-link {
+  color: var(--color-error);
 }
 
 .field-error,
@@ -244,5 +402,27 @@ a {
 
   .card {
     padding: 16px;
+  }
+
+  /* 時段改成兩欄：星期＋刪除一列，起訖節次一列 */
+  .time-row {
+    grid-template-columns: 1fr auto;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--color-border);
+  }
+
+  .time-row .time-part:nth-of-type(2),
+  .time-row .time-part:nth-of-type(3) {
+    grid-column: 1 / -1;
+  }
+
+  .time-row .time-delete {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .course-item {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

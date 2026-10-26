@@ -94,3 +94,84 @@ class AuthTests(TestCase):
         user = get_user_model().objects.create_user('student', password=self.password)
         self.client.force_login(user)
         self.assertRedirects(self.client.get(reverse('home')), reverse('timetable'))
+
+
+class CourseCrudTests(TestCase):
+    fixtures = ['periods']
+
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user('student', password='pw-12345678')
+        self.other = User.objects.create_user('other', password='pw-12345678')
+        self.client.force_login(self.user)
+
+    def course_data(self, times, **overrides):
+        """組出課程表單＋上課時段 formset 的 POST 資料。times 為 (星期, 起, 迄[, id, 刪除])。"""
+        data = {
+            'name': '網頁程式設計', 'teacher': '王老師', 'classroom': '六教 601',
+            'credits': 3, 'category': 'required', 'color': '', 'note': '',
+            'times-TOTAL_FORMS': len(times), 'times-INITIAL_FORMS': 0,
+            'times-MIN_NUM_FORMS': 1, 'times-MAX_NUM_FORMS': 1000,
+        }
+        initial = 0
+        for i, (weekday, start, end, *rest) in enumerate(times):
+            data[f'times-{i}-weekday'] = weekday
+            data[f'times-{i}-start_period'] = Period.objects.get(number=start).pk
+            data[f'times-{i}-end_period'] = Period.objects.get(number=end).pk
+            if rest:
+                data[f'times-{i}-id'] = rest[0]
+                initial += 1
+                if len(rest) > 1 and rest[1]:
+                    data[f'times-{i}-DELETE'] = 'on'
+        data['times-INITIAL_FORMS'] = initial
+        data.update(overrides)
+        return data
+
+    def test_create_course_with_two_times(self):
+        response = self.client.post(reverse('course_create'), self.course_data([(2, 1, 2), (4, 5, 5)]))
+        self.assertRedirects(response, reverse('timetable'))
+        course = Course.objects.get(owner=self.user)
+        self.assertEqual(course.times.count(), 2)
+        self.assertContains(self.client.get(reverse('timetable')), '總學分 3')
+
+    def test_create_requires_at_least_one_time(self):
+        response = self.client.post(reverse('course_create'), self.course_data([]))
+        self.assertContains(response, '請至少設定 1 個上課時段。')
+        self.assertFalse(Course.objects.exists())
+
+    def test_overlapping_times_in_same_course_rejected(self):
+        response = self.client.post(reverse('course_create'), self.course_data([(2, 1, 3), (2, 3, 4)]))
+        self.assertContains(response, '同一門課的上課時段重疊了')
+        self.assertFalse(Course.objects.exists())
+
+    def test_end_before_start_rejected(self):
+        response = self.client.post(reverse('course_create'), self.course_data([(1, 4, 2)]))
+        self.assertContains(response, '結束節次不可早於開始節次。')
+        self.assertFalse(Course.objects.exists())
+
+    def test_update_course_and_delete_one_time(self):
+        self.client.post(reverse('course_create'), self.course_data([(2, 1, 2), (4, 5, 5)]))
+        course = Course.objects.get()
+        keep, drop = course.times.order_by('weekday')
+        data = self.course_data(
+            [(2, 1, 2, keep.pk), (4, 5, 5, drop.pk, True)], name='網頁程式設計（二）', credits=2
+        )
+        response = self.client.post(reverse('course_update', args=[course.pk]), data)
+        self.assertRedirects(response, reverse('timetable'))
+        course.refresh_from_db()
+        self.assertEqual(course.name, '網頁程式設計（二）')
+        self.assertEqual(list(course.times.values_list('pk', flat=True)), [keep.pk])
+
+    def test_delete_course(self):
+        course = Course.objects.create(owner=self.user, name='英文')
+        self.assertContains(self.client.get(reverse('course_delete', args=[course.pk])), '英文')
+        response = self.client.post(reverse('course_delete', args=[course.pk]))
+        self.assertRedirects(response, reverse('timetable'))
+        self.assertFalse(Course.objects.exists())
+
+    def test_cannot_touch_other_users_course(self):
+        course = Course.objects.create(owner=self.other, name='別人的課')
+        self.assertEqual(self.client.get(reverse('course_update', args=[course.pk])).status_code, 404)
+        self.assertEqual(self.client.post(reverse('course_delete', args=[course.pk])).status_code, 404)
+        self.assertNotContains(self.client.get(reverse('timetable')), '別人的課')
+        self.assertTrue(Course.objects.filter(pk=course.pk).exists())
