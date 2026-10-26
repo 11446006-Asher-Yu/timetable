@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# 虛擬環境
+.venv/
+
+# Django
+db.sqlite3
+staticfiles/
+media/
+
+# 機密設定
+.env
+
+# 編輯器／系統
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
