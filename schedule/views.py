@@ -60,8 +60,22 @@ def build_grid(courses):
                 'span': time.end_period.number - time.start_period.number + 1,
             })
 
+    # 手機版依星期分頁，每天的課依開始節次排序
+    days = [
+        {
+            'value': day,
+            'label': day.label[-1],
+            'blocks': sorted(
+                (b for b in blocks if b['time'].weekday == day),
+                key=lambda b: b['time'].start_period.number,
+            ),
+        }
+        for day in weekdays
+    ]
+
     return {
         'weekdays': [{'value': day, 'label': day.label[-1], 'column': column_of[day]} for day in weekdays],
+        'days': days,
         'periods': [{'period': period, 'row': row_of[period.number]} for period in periods],
         'cells': [
             {'row': row_of[period.number], 'column': column_of[day], 'weekday': day}

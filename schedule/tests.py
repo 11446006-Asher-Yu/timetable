@@ -245,3 +245,19 @@ class TimetableGridTests(TestCase):
         self.assertContains(response, 'data-weekday="3"')
         self.assertContains(response, 'data-start="2"')
         self.assertContains(response, 'data-end="4"')
+
+    def test_mobile_days_sorted_by_start_period(self):
+        self.add_course('下午課', 'elective', 2, (2, 6, 7))
+        self.add_course('早八', 'required', 3, (2, 1, 2))
+        self.add_course('週六課', 'other', 1, (6, 3, 3))
+        days = self.client.get(reverse('timetable')).context['grid']['days']
+        self.assertEqual([d['label'] for d in days], ['一', '二', '三', '四', '五', '六'])
+        tuesday = next(d for d in days if d['value'] == 2)
+        self.assertEqual([b['course'].name for b in tuesday['blocks']], ['早八', '下午課'])
+        self.assertEqual(days[0]['blocks'], [])
+
+    def test_toolbar_and_export_assets(self):
+        response = self.client.get(reverse('timetable'))
+        self.assertContains(response, 'id="print-button"')
+        self.assertContains(response, 'id="export-button"')
+        self.assertContains(response, 'html2canvas/1.4.1/html2canvas.min.js')

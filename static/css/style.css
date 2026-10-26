@@ -409,7 +409,7 @@ a {
   overflow: hidden;
   border-left: 4px solid var(--course-color);
   border-radius: 6px;
-  background: color-mix(in srgb, var(--course-color) 22%, #FFFFFF);
+  background: var(--course-tint);
   color: var(--color-text);
   font-size: 0.85rem;
   line-height: 1.3;
@@ -417,7 +417,7 @@ a {
 }
 
 .tt-course:hover {
-  background: color-mix(in srgb, var(--course-color) 35%, #FFFFFF);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .tt-course-name {
@@ -448,17 +448,18 @@ a {
   color: #FFFFFF;
 }
 
-.tt-now-badge {
+.now-badge {
   display: none;
 }
 
-.tt-course.is-current {
+.tt-course.is-current,
+.m-course.is-current {
   outline: 3px solid var(--course-color);
   outline-offset: -1px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.tt-course.is-current .tt-now-badge {
+.is-current .now-badge {
   display: inline-block;
   align-self: flex-start;
   margin-top: 2px;
@@ -468,6 +469,140 @@ a {
   color: #FFFFFF;
   font-size: 0.7rem;
   font-weight: 600;
+}
+
+/* ===== 工具列與匯出範圍 ===== */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.toolbar .button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.export-title {
+  display: none;
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+}
+
+/* ===== 手機版：依星期分頁 ===== */
+.mobile-days {
+  display: none;
+}
+
+.day-tabs {
+  display: none;
+}
+
+.mobile-days.is-tabbed .day-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(36px, 1fr));
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 4px;
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.day-tab {
+  padding: 8px 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.day-tab.is-selected {
+  background: var(--color-primary);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.day-panel-title {
+  margin: 16px 0 8px;
+  font-size: 1rem;
+}
+
+/* 分頁模式下標題由分頁按鈕表示 */
+.mobile-days.is-tabbed .day-panel-title {
+  display: none;
+}
+
+.m-course {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border-left: 5px solid var(--course-color);
+  border-radius: var(--radius);
+  background: var(--course-tint);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.m-course-time,
+.m-course-room {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.m-course-name {
+  font-weight: 600;
+}
+
+.m-course .now-badge {
+  margin-top: 0;
+  vertical-align: middle;
+}
+
+/* ===== 匯出圖片模式（只套用在 html2canvas 複製出來的頁面） ===== */
+.is-exporting #export-area {
+  width: 960px;
+  padding: 24px;
+  background: #FFFFFF;
+}
+
+.is-exporting .export-title {
+  display: block;
+}
+
+.is-exporting .timetable-scroll {
+  display: block;
+  overflow: visible;
+}
+
+.is-exporting .tt-day.is-today,
+.is-exporting .tt-period.is-now {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.is-exporting .tt-period.is-now .tt-period-time {
+  color: var(--color-muted);
+}
+
+.is-exporting .tt-cell.is-today {
+  background: transparent;
+}
+
+.is-exporting .tt-course.is-current {
+  outline: none;
+  box-shadow: none;
+}
+
+.is-exporting .is-current .now-badge {
+  display: none;
 }
 
 /* ===== 課程詳細資料視窗 ===== */
@@ -667,5 +802,105 @@ a {
   .course-item {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  /* 課表改用星期分頁 */
+  .timetable-scroll {
+    display: none;
+  }
+
+  .mobile-days {
+    display: block;
+  }
+
+  .page-heading {
+    flex-wrap: wrap;
+  }
+
+  .toolbar {
+    justify-content: flex-start;
+  }
+}
+
+/* ===== 列印 ===== */
+@page {
+  size: A4 landscape;
+  margin: 12mm;
+}
+
+@media print {
+  /* 讓類別底色、色條照實印出 */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    background: #FFFFFF;
+  }
+
+  .site-header,
+  .toolbar,
+  .messages,
+  .mobile-days,
+  .course-list-card,
+  .course-dialog,
+  .empty {
+    display: none !important;
+  }
+
+  .container {
+    max-width: none;
+    padding: 0;
+  }
+
+  .timetable-card {
+    padding: 0;
+    border: none;
+  }
+
+  .timetable-card .page-heading {
+    display: none;
+  }
+
+  .export-title {
+    display: block;
+  }
+
+  .timetable-scroll {
+    display: block;
+    overflow: visible;
+  }
+
+  .timetable {
+    min-width: 0;
+    grid-auto-rows: minmax(40px, auto);
+  }
+
+  .tt-day.is-today,
+  .tt-period.is-now {
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  .tt-period.is-now .tt-period-time {
+    color: var(--color-muted);
+  }
+
+  .tt-cell.is-today {
+    background: transparent;
+  }
+
+  .tt-course.is-current {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .is-current .now-badge {
+    display: none;
+  }
+
+  .tt-course {
+    break-inside: avoid;
   }
 }
