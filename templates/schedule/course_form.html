@@ -1,17 +1,17 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}{% if is_new %}新增課程{% else %}修改課程{% endif %}｜線上個人課表{% endblock %}
+{% block title %}{% if is_new %}{% translate "Add course" %}{% else %}{% translate "Edit course" %}{% endif %} | {% translate "Online Timetable" %}{% endblock %}
 
 {% block content %}
 <section class="card form-card">
-  <h1>{% if is_new %}新增課程{% else %}修改課程{% endif %}</h1>
+  <h1>{% if is_new %}{% translate "Add course" %}{% else %}{% translate "Edit course" %}{% endif %}</h1>
   <form method="post" novalidate>
     {% csrf_token %}
     {% include '_form_fields.html' %}
 
     <fieldset class="time-fieldset">
-      <legend>上課時段</legend>
+      <legend>{% translate "Class times" %}</legend>
       {{ formset.management_form }}
       {% for error in formset.non_form_errors %}<p class="field-error">{{ error }}</p>{% endfor %}
       <div id="time-rows">
@@ -22,25 +22,25 @@
       <template id="time-row-template">
         {% with time_form=formset.empty_form %}{% include 'schedule/_time_row.html' %}{% endwith %}
       </template>
-      <button type="button" id="add-time" class="button button-outline button-small-outline">＋ 再加一個時段</button>
+      <button type="button" id="add-time" class="button button-outline button-small-outline">{% translate "+ Add another time" %}</button>
     </fieldset>
 
     {% if conflicts %}
       <div class="conflict-warning" role="alert">
-        <p><strong>⚠ 這門課和其他課程衝堂：</strong></p>
+        <p><strong>{% translate "⚠ This course overlaps with other courses:" %}</strong></p>
         <ul>
           {% for conflict in conflicts %}<li>{{ conflict }}</li>{% endfor %}
         </ul>
         <label class="conflict-confirm">
           <input type="checkbox" name="allow_conflict" value="1">
-          我知道衝堂，仍要儲存（例如旁聽、隔週上課）
+          {% translate "I know about the overlap. Save anyway (e.g. auditing or alternate weeks)." %}
         </label>
       </div>
     {% endif %}
 
     <div class="form-actions">
-      <a href="{% url 'timetable' %}" class="button button-outline">取消</a>
-      <button type="submit" class="button">儲存</button>
+      <a href="{% url 'timetable' %}" class="button button-outline">{% translate "Cancel" %}</a>
+      <button type="submit" class="button">{% translate "Save" %}</button>
     </div>
   </form>
 </section>

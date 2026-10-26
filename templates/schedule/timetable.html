@@ -1,46 +1,46 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static i18n %}
 
-{% block title %}我的課表｜線上個人課表{% endblock %}
+{% block title %}{% translate "My timetable" %} | {% translate "Online Timetable" %}{% endblock %}
 
 {% block content %}
 <section class="card timetable-card">
   <div class="page-heading">
-    <h1>我的課表</h1>
+    <h1>{% translate "My timetable" %}</h1>
     <div class="toolbar">
-      <a href="{% url 'share_settings' %}" class="button button-outline">分享</a>
-      <button type="button" class="button button-outline" id="print-button">列印</button>
-      <button type="button" class="button button-outline" id="export-button">匯出圖片</button>
-      <a href="{% url 'course_create' %}" class="button">＋ 新增課程</a>
+      <a href="{% url 'share_settings' %}" class="button button-outline">{% translate "Share" %}</a>
+      <button type="button" class="button button-outline" id="print-button">{% translate "Print" %}</button>
+      <button type="button" class="button button-outline" id="export-button">{% translate "Export image" %}</button>
+      <a href="{% url 'course_create' %}" class="button">{% translate "+ Add course" %}</a>
     </div>
   </div>
 
   {% include 'schedule/_timetable_body.html' with owner=user can_edit=True %}
 
   {% if not courses %}
-    <p class="empty">還沒有任何課程，按「新增課程」開始建立你的課表。</p>
+    <p class="empty">{% translate "No courses yet. Click “Add course” to start your timetable." %}</p>
   {% endif %}
 </section>
 
 {% if courses %}
 <section class="card course-list-card">
-  <h2>課程清單</h2>
+  <h2>{% translate "Course list" %}</h2>
   <ul class="course-list">
     {% for course in courses %}
       <li class="course-item" style="border-left-color: {{ course.display_color }}">
         <div class="course-info">
           <strong>{{ course.name }}</strong>
           <span class="tag" style="background: {{ course.display_color }}">{{ course.get_category_display }}</span>
-          <span class="muted">{{ course.credits }} 學分</span>
+          <span class="muted">{% blocktranslate count credits=course.credits %}{{ credits }} credit{% plural %}{{ credits }} credits{% endblocktranslate %}</span>
           <div class="muted">
-            {% for time in course.times.all %}{{ time }}{% if not forloop.last %}、{% endif %}{% endfor %}
-            {% if course.classroom %}｜{{ course.classroom }}{% endif %}
-            {% if course.teacher %}｜{{ course.teacher }}{% endif %}
+            {% for time in course.times.all %}{{ time }}{% if not forloop.last %}{% translate ", " context "list separator" %}{% endif %}{% endfor %}
+            {% if course.classroom %} · {{ course.classroom }}{% endif %}
+            {% if course.teacher %} · {{ course.teacher }}{% endif %}
           </div>
         </div>
         <div class="course-actions">
-          <a href="{% url 'course_update' course.pk %}">修改</a>
-          <a href="{% url 'course_delete' course.pk %}" class="danger-link">刪除</a>
+          <a href="{% url 'course_update' course.pk %}">{% translate "Edit" %}</a>
+          <a href="{% url 'course_delete' course.pk %}" class="danger-link">{% translate "Delete" %}</a>
         </div>
       </li>
     {% endfor %}

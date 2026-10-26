@@ -1,26 +1,27 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}{{ owner.username }} 的課表｜線上個人課表{% endblock %}
+{% block title %}{% blocktranslate with name=owner.username %}{{ name }}’s timetable{% endblocktranslate %} | {% translate "Online Timetable" %}{% endblock %}
 
 {% block content %}
 <section class="card timetable-card">
   <div class="page-heading">
-    <h1>{{ owner.username }} 的課表 <span class="readonly-tag">唯讀</span></h1>
+    <h1>{% blocktranslate with name=owner.username %}{{ name }}’s timetable{% endblocktranslate %} <span class="readonly-tag">{% translate "Read-only" %}</span></h1>
     <div class="toolbar">
-      <button type="button" class="button button-outline" id="print-button">列印</button>
-      <button type="button" class="button button-outline" id="export-button">匯出圖片</button>
+      <button type="button" class="button button-outline" id="print-button">{% translate "Print" %}</button>
+      <button type="button" class="button button-outline" id="export-button">{% translate "Export image" %}</button>
     </div>
   </div>
 
   {% include 'schedule/_timetable_body.html' with can_edit=False %}
 
   {% if not grid.blocks %}
-    <p class="empty">這份課表目前沒有課程。</p>
+    <p class="empty">{% translate "This timetable has no courses yet." %}</p>
   {% endif %}
 </section>
 
 {% if not user.is_authenticated %}
-  <p class="share-cta">想做一份自己的課表？<a href="{% url 'signup' %}">免費註冊</a></p>
+  <p class="share-cta">{% translate "Want a timetable of your own?" %} <a href="{% url 'signup' %}">{% translate "Sign up free" %}</a></p>
 {% endif %}
 
 {% include 'schedule/_timetable_scripts.html' %}

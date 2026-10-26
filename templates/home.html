@@ -1,12 +1,13 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block content %}
 <section class="hero">
-  <h1>你的課表，隨時帶著走</h1>
-  <p>新增課程、依類別上色、自動計算學分，手機上也能查「現在該去哪上課」。</p>
+  <h1>{% translate "Your timetable, wherever you go" %}</h1>
+  <p>{% translate "Add courses, color them by category, total your credits, and check where your next class is right from your phone." %}</p>
   <div class="hero-actions">
-    <a href="{% url 'signup' %}" class="button">免費註冊</a>
-    <a href="{% url 'login' %}" class="button button-outline">登入</a>
+    <a href="{% url 'signup' %}" class="button">{% translate "Sign up free" %}</a>
+    <a href="{% url 'login' %}" class="button button-outline">{% translate "Log in" %}</a>
   </div>
 </section>
 {% endblock %}

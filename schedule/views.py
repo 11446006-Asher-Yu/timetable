@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.translation import gettext
 
 from .conflicts import assign_lanes, find_conflicts
 from .forms import CourseForm, CourseTimeFormSet, SignUpForm
@@ -25,7 +26,9 @@ def signup(request):
         if form.is_valid():
             user = form.save()
             login(request, user)  # 註冊完直接登入
-            messages.success(request, f'歡迎，{user.username}！帳號已建立。')
+            messages.success(
+                request, gettext('Welcome, %(name)s! Your account has been created.') % {'name': user.username}
+            )
             return redirect('timetable')
     else:
         form = SignUpForm()
@@ -68,7 +71,8 @@ def build_grid(courses):
     days = [
         {
             'value': day,
-            'label': day.label[-1],
+            'label': str(CourseTime.WEEKDAY_SHORT[day]),
+            'full_label': str(day.label),
             'blocks': sorted(
                 (b for b in blocks if b['time'].weekday == day),
                 key=lambda b: b['time'].start_period.number,
@@ -78,7 +82,11 @@ def build_grid(courses):
     ]
 
     return {
-        'weekdays': [{'value': day, 'label': day.label[-1], 'column': column_of[day]} for day in weekdays],
+        # 翻譯在這裡就轉成字串，模板和測試拿到的都是目前語言的文字
+        'weekdays': [
+            {'value': day, 'label': str(CourseTime.WEEKDAY_SHORT[day]), 'column': column_of[day]}
+            for day in weekdays
+        ],
         'days': days,
         'periods': [{'period': period, 'row': row_of[period.number]} for period in periods],
         'cells': [
@@ -121,7 +129,7 @@ def timetable_context(owner, can_edit):
     }
     categories = [
         {
-            'label': category.label,
+            'label': str(category.label),
             'color': Course.CATEGORY_COLORS[category],
             'credits': subtotals.get(category, 0),
         }
@@ -144,20 +152,20 @@ def timetable(request):
 
 @login_required
 def share_settings(request):
-    link, _ = ShareLink.objects.get_or_create(user=request.user)
+    link, _created = ShareLink.objects.get_or_create(user=request.user)
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'enable':
             link.is_active = True
             link.save(update_fields=['is_active'])
-            messages.success(request, '已開啟分享，把連結傳給想分享的人吧。')
+            messages.success(request, gettext('Sharing is on. Send the link to anyone you like.'))
         elif action == 'disable':
             link.is_active = False
             link.save(update_fields=['is_active'])
-            messages.success(request, '已停止分享，原本的連結已無法開啟。')
+            messages.success(request, gettext('Sharing is off. The old link no longer works.'))
         elif action == 'regenerate':
             link.regenerate()
-            messages.success(request, '已產生新連結，舊連結已失效。')
+            messages.success(request, gettext('A new link has been created. The old link no longer works.'))
         return redirect('share_settings')
     share_url = request.build_absolute_uri(reverse('shared_timetable', args=[link.token]))
     return render(request, 'schedule/share_settings.html', {'link': link, 'share_url': share_url})
@@ -189,7 +197,8 @@ def _edit_course(request, course):
                     course = form.save()
                     formset.instance = course
                     formset.save()
-                messages.success(request, f'已{"新增" if is_new else "更新"}「{course.name}」。')
+                text = gettext('Added “%(name)s”.') if is_new else gettext('Updated “%(name)s”.')
+                messages.success(request, text % {'name': course.name})
                 return redirect('timetable')
     else:
         form = CourseForm(instance=course)
@@ -220,6 +229,6 @@ def course_delete(request, pk):
     if request.method == 'POST':
         name = course.name
         course.delete()
-        messages.success(request, f'已刪除「{name}」。')
+        messages.success(request, gettext('Deleted “%(name)s”.') % {'name': name})
         return redirect('timetable')
     return render(request, 'schedule/course_confirm_delete.html', {'course': course})

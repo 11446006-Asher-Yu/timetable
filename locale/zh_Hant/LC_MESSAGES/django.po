@@ -1,0 +1,543 @@
+# 線上個人課表：繁體中文翻譯
+# 改完後執行 python scripts/i18n_tools.py extract 確認沒有缺漏，再執行 compile 產生 django.mo
+msgid ""
+msgstr ""
+"Project-Id-Version: timetable\n"
+"Language: zh_Hant\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# ===== 共用 =====
+msgid "Online Timetable"
+msgstr "線上個人課表"
+
+msgid "Timetable"
+msgstr "課表"
+
+msgid "My timetable"
+msgstr "我的課表"
+
+msgid "Log in"
+msgstr "登入"
+
+msgid "Log out"
+msgstr "登出"
+
+msgid "Sign up"
+msgstr "註冊"
+
+msgid "Sign up free"
+msgstr "免費註冊"
+
+msgid "Back to home"
+msgstr "回到首頁"
+
+msgid "Back to log in"
+msgstr "回到登入"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "Save"
+msgstr "儲存"
+
+msgid "Edit"
+msgstr "修改"
+
+msgid "Delete"
+msgstr "刪除"
+
+msgid "Close"
+msgstr "關閉"
+
+msgid "Select"
+msgstr "請選擇"
+
+msgctxt "list separator"
+msgid ", "
+msgstr "、"
+
+# ===== 首頁 =====
+msgid "Your timetable, wherever you go"
+msgstr "你的課表，隨時帶著走"
+
+msgid "Add courses, color them by category, total your credits, and check where your next class is right from your phone."
+msgstr "新增課程、依類別上色、自動計算學分，手機上也能查「現在該去哪上課」。"
+
+# ===== 帳號 =====
+msgid "Email"
+msgstr "Email"
+
+msgid "This email is already registered."
+msgstr "這個 Email 已經註冊過了。"
+
+msgid "Create account"
+msgstr "建立帳號"
+
+msgid "Already have an account?"
+msgstr "已經有帳號了？"
+
+msgid "No account yet?"
+msgstr "還沒有帳號？"
+
+msgid "Forgot password?"
+msgstr "忘記密碼？"
+
+msgid "Welcome, %(name)s! Your account has been created."
+msgstr "歡迎，%(name)s！帳號已建立。"
+
+# ===== 忘記密碼 =====
+msgid "Forgot password"
+msgstr "忘記密碼"
+
+msgid "Enter the email you signed up with and we’ll send you a link to reset your password."
+msgstr "輸入註冊時填寫的 Email，我們會寄一封重設密碼的信給你。"
+
+msgid "Send reset email"
+msgstr "寄出重設密碼信"
+
+msgid "Check your email"
+msgstr "請查收信件"
+
+msgid "If an account exists for this email, we’ve sent a password reset link. Please use it within 24 hours."
+msgstr "如果這個 Email 有註冊帳號，重設密碼的信已經寄出，請在 24 小時內點信中的連結。"
+
+msgid "Didn’t get it? Check your spam folder or make sure you entered the right email."
+msgstr "沒收到的話，請檢查垃圾郵件匣，或確認輸入的 Email 是否正確。"
+
+msgid "Set a new password"
+msgstr "設定新密碼"
+
+msgid "Update password"
+msgstr "更新密碼"
+
+msgid "Link expired"
+msgstr "連結已失效"
+
+msgid "This password reset link has already been used or has expired."
+msgstr "這個重設密碼連結已經用過或已過期。"
+
+msgid "Send a new reset email"
+msgstr "重新寄一封重設密碼信"
+
+msgid "Password updated"
+msgstr "密碼已更新"
+
+msgid "Please log in with your new password."
+msgstr "請用新密碼登入。"
+
+msgid "Go to log in"
+msgstr "前往登入"
+
+msgid "[Online Timetable] Reset your password"
+msgstr "【線上個人課表】重設密碼"
+
+msgid "Hi %(name)s,"
+msgstr "%(name)s 你好："
+
+msgid "We received a request to reset the password for your Online Timetable account. Use the link below within 24 hours to set a new password:"
+msgstr "我們收到重設「線上個人課表」帳號密碼的申請。請在 24 小時內點下面的連結設定新密碼："
+
+msgid "If you didn’t request this, just ignore this email. Your password won’t change."
+msgstr "如果不是你本人申請，請直接忽略這封信，你的密碼不會改變。"
+
+# ===== 課表 =====
+msgid "Share"
+msgstr "分享"
+
+msgid "Print"
+msgstr "列印"
+
+msgid "Export image"
+msgstr "匯出圖片"
+
+msgid "+ Add course"
+msgstr "＋ 新增課程"
+
+msgid "No courses yet. Click “Add course” to start your timetable."
+msgstr "還沒有任何課程，按「新增課程」開始建立你的課表。"
+
+msgid "Course list"
+msgstr "課程清單"
+
+msgid "%(credits)s credit"
+msgid_plural "%(credits)s credits"
+msgstr[0] "%(credits)s 學分"
+
+msgid "%(name)s’s timetable"
+msgstr "%(name)s 的課表"
+
+msgid "Total credits"
+msgstr "總學分"
+
+msgid "Category legend"
+msgstr "類別圖例"
+
+msgid "Period"
+msgstr "節次"
+
+msgid "Overlap"
+msgstr "衝堂"
+
+msgid "In class"
+msgstr "上課中"
+
+msgid "Choose a day"
+msgstr "選擇星期"
+
+msgid "No classes on this day."
+msgstr "這天沒有課。"
+
+msgid "⚠ %(counter)s class time in your timetable overlaps. Overlapping courses are shown side by side with a dashed border."
+msgid_plural "⚠ %(counter)s class times in your timetable overlap. Overlapping courses are shown side by side with a dashed border."
+msgstr[0] "⚠ 課表中有 %(counter)s 個時段衝堂，衝堂的課程會並排顯示並加上虛線框。"
+
+msgid "Period %(start)s"
+msgstr "第 %(start)s 節"
+
+msgid "Periods %(start)s–%(end)s"
+msgstr "第 %(start)s–%(end)s 節"
+
+msgid "Period %(number)s"
+msgstr "第 %(number)s 節"
+
+msgid "%(day)s, period %(start)s"
+msgstr "%(day)s 第 %(start)s 節"
+
+msgid "%(day)s, periods %(start)s–%(end)s"
+msgstr "%(day)s 第 %(start)s–%(end)s 節"
+
+# ===== 詳細資料視窗與匯出 =====
+msgid "Category"
+msgstr "類別"
+
+msgid "Teacher"
+msgstr "老師"
+
+msgid "Classroom"
+msgstr "教室"
+
+msgid "Credits"
+msgstr "學分"
+
+msgid "Times"
+msgstr "時段"
+
+msgid "Note"
+msgstr "備註"
+
+msgid "{n} credit"
+msgstr "{n} 學分"
+
+msgid "{n} credits"
+msgstr "{n} 學分"
+
+msgid "Exporting…"
+msgstr "匯出中…"
+
+msgid "timetable"
+msgstr "我的課表"
+
+msgid "The export tool failed to load. Check your connection and reload the page."
+msgstr "匯出元件載入失敗，請確認網路連線後重新整理頁面。"
+
+msgid "Export failed. Please try again later."
+msgstr "匯出圖片失敗，請稍後再試。"
+
+# ===== 新增、修改、刪除課程 =====
+msgid "Add course"
+msgstr "新增課程"
+
+msgid "Edit course"
+msgstr "修改課程"
+
+msgid "Class times"
+msgstr "上課時段"
+
+msgid "+ Add another time"
+msgstr "＋ 再加一個時段"
+
+msgid "From"
+msgstr "從"
+
+msgid "To"
+msgstr "到"
+
+msgid "Remove"
+msgstr "刪除"
+
+msgid "Start period"
+msgstr "開始節次"
+
+msgid "End period"
+msgstr "結束節次"
+
+msgid "Add at least one class time."
+msgstr "請至少設定 1 個上課時段。"
+
+msgid "Class times of the same course overlap. Please check them."
+msgstr "同一門課的上課時段重疊了，請檢查。"
+
+msgid "⚠ This course overlaps with other courses:"
+msgstr "⚠ 這門課和其他課程衝堂："
+
+msgid "I know about the overlap. Save anyway (e.g. auditing or alternate weeks)."
+msgstr "我知道衝堂，仍要儲存（例如旁聽、隔週上課）"
+
+msgid "%(time)s overlaps with “%(course)s” (%(other)s)"
+msgstr "%(time)s 與「%(course)s」（%(other)s）衝堂"
+
+msgid "Added “%(name)s”."
+msgstr "已新增「%(name)s」。"
+
+msgid "Updated “%(name)s”."
+msgstr "已更新「%(name)s」。"
+
+msgid "Deleted “%(name)s”."
+msgstr "已刪除「%(name)s」。"
+
+msgid "Delete course"
+msgstr "刪除課程"
+
+msgid "Delete “<strong>%(name)s</strong>”? All of its class times will be deleted too, and this can’t be undone."
+msgstr "確定要刪除「<strong>%(name)s</strong>」嗎？這門課的所有上課時段都會一起刪除，而且無法復原。"
+
+# ===== 分享 =====
+msgid "Share timetable"
+msgstr "分享課表"
+
+msgid "When sharing is on, anyone with the link can view your timetable without logging in, including teachers, classrooms and notes, but they can’t change anything."
+msgstr "開啟分享後，任何拿到連結的人不必登入就能看你的課表，包含老師、教室和備註，但不能修改。"
+
+msgid "Status:"
+msgstr "目前狀態："
+
+msgid "Sharing"
+msgstr "分享中"
+
+msgid "Not shared"
+msgstr "未分享"
+
+msgid "Share link"
+msgstr "分享連結"
+
+msgid "Copy link"
+msgstr "複製連結"
+
+msgid "Copied!"
+msgstr "已複製！"
+
+msgid "Preview the shared page in a new tab"
+msgstr "在新分頁預覽分享頁"
+
+msgid "Create a new link"
+msgstr "重新產生連結"
+
+msgid "Stop sharing"
+msgstr "停止分享"
+
+msgid "A new link makes the old one stop working right away. Useful if the link was passed to someone you didn’t intend."
+msgstr "重新產生後舊連結會立刻失效，適合連結被轉傳給不想讓他看的人時使用。"
+
+msgid "Turn on sharing"
+msgstr "開啟分享"
+
+msgid "Back to my timetable"
+msgstr "回到我的課表"
+
+msgid "Read-only"
+msgstr "唯讀"
+
+msgid "This timetable has no courses yet."
+msgstr "這份課表目前沒有課程。"
+
+msgid "Want a timetable of your own?"
+msgstr "想做一份自己的課表？"
+
+msgid "Sharing is on. Send the link to anyone you like."
+msgstr "已開啟分享，把連結傳給想分享的人吧。"
+
+msgid "Sharing is off. The old link no longer works."
+msgstr "已停止分享，原本的連結已無法開啟。"
+
+msgid "A new link has been created. The old link no longer works."
+msgstr "已產生新連結，舊連結已失效。"
+
+msgid "Share link of %(user)s"
+msgstr "%(user)s 的分享連結"
+
+# ===== 錯誤頁 =====
+msgid "Page not found"
+msgstr "找不到這個頁面"
+
+msgid "The address may be wrong, or this timetable is no longer shared."
+msgstr "網址可能打錯了，或是這份課表已經停止分享。"
+
+msgid "Something went wrong"
+msgstr "系統發生錯誤"
+
+msgid "Please try again later. If this keeps happening, contact the site administrator."
+msgstr "請稍後再試。如果一直出現這個畫面，請聯絡網站管理者。"
+
+# ===== 資料模型（表單欄位名稱、後台） =====
+msgid "number"
+msgstr "節次編號"
+
+msgid "label"
+msgstr "顯示名稱"
+
+msgid "start time"
+msgstr "上課時間"
+
+msgid "end time"
+msgstr "下課時間"
+
+msgid "period"
+msgstr "節次"
+
+msgid "periods"
+msgstr "節次"
+
+msgid "End time must be later than start time."
+msgstr "下課時間必須晚於上課時間。"
+
+msgid "Required"
+msgstr "必修"
+
+msgid "Elective"
+msgstr "選修"
+
+msgid "General education"
+msgstr "通識"
+
+msgid "Physical education"
+msgstr "體育"
+
+msgid "Other"
+msgstr "其他"
+
+msgid "owner"
+msgstr "擁有者"
+
+msgid "course name"
+msgstr "課程名稱"
+
+msgid "teacher"
+msgstr "授課老師"
+
+msgid "classroom"
+msgstr "上課教室"
+
+msgid "credits"
+msgstr "學分數"
+
+msgid "category"
+msgstr "類別"
+
+msgid "custom color"
+msgstr "自訂顏色"
+
+msgid "Enter a color code like #RRGGBB."
+msgstr "請輸入 #RRGGBB 格式的色碼。"
+
+msgid "Leave blank to use the category color."
+msgstr "留白則使用類別預設色"
+
+msgid "note"
+msgstr "備註"
+
+msgid "created at"
+msgstr "建立時間"
+
+msgid "updated at"
+msgstr "修改時間"
+
+msgid "course"
+msgstr "課程"
+
+msgid "courses"
+msgstr "課程"
+
+msgid "Monday"
+msgstr "星期一"
+
+msgid "Tuesday"
+msgstr "星期二"
+
+msgid "Wednesday"
+msgstr "星期三"
+
+msgid "Thursday"
+msgstr "星期四"
+
+msgid "Friday"
+msgstr "星期五"
+
+msgid "Saturday"
+msgstr "星期六"
+
+msgid "Sunday"
+msgstr "星期日"
+
+msgctxt "weekday"
+msgid "Mon"
+msgstr "一"
+
+msgctxt "weekday"
+msgid "Tue"
+msgstr "二"
+
+msgctxt "weekday"
+msgid "Wed"
+msgstr "三"
+
+msgctxt "weekday"
+msgid "Thu"
+msgstr "四"
+
+msgctxt "weekday"
+msgid "Fri"
+msgstr "五"
+
+msgctxt "weekday"
+msgid "Sat"
+msgstr "六"
+
+msgctxt "weekday"
+msgid "Sun"
+msgstr "日"
+
+msgid "day"
+msgstr "星期"
+
+msgid "start period"
+msgstr "開始節次"
+
+msgid "end period"
+msgstr "結束節次"
+
+msgid "class time"
+msgstr "上課時段"
+
+msgid "class times"
+msgstr "上課時段"
+
+msgid "End period cannot be earlier than start period."
+msgstr "結束節次不可早於開始節次。"
+
+msgid "user"
+msgstr "使用者"
+
+msgid "token"
+msgstr "識別碼"
+
+msgid "sharing on"
+msgstr "開放分享"
+
+msgid "share link"
+msgstr "分享連結"
+
+msgid "share links"
+msgstr "分享連結"

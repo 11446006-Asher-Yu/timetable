@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}刪除課程｜線上個人課表{% endblock %}
+{% block title %}{% translate "Delete course" %} | {% translate "Online Timetable" %}{% endblock %}
 
 {% block content %}
 <section class="card auth-card">
-  <h1>刪除課程</h1>
-  <p>確定要刪除「<strong>{{ course.name }}</strong>」嗎？這門課的所有上課時段都會一起刪除，而且無法復原。</p>
+  <h1>{% translate "Delete course" %}</h1>
+  <p>{% blocktranslate with name=course.name %}Delete “<strong>{{ name }}</strong>”? All of its class times will be deleted too, and this can’t be undone.{% endblocktranslate %}</p>
   <form method="post" class="form-actions">
     {% csrf_token %}
-    <a href="{% url 'timetable' %}" class="button button-outline">取消</a>
-    <button type="submit" class="button button-danger">確定刪除</button>
+    <a href="{% url 'timetable' %}" class="button button-outline">{% translate "Cancel" %}</a>
+    <button type="submit" class="button button-danger">{% translate "Delete" %}</button>
   </form>
 </section>
 {% endblock %}

@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}找不到頁面｜線上個人課表{% endblock %}
+{% block title %}{% translate "Page not found" %} | {% translate "Online Timetable" %}{% endblock %}
 
 {% block content %}
 <section class="card auth-card">
-  <h1>找不到這個頁面</h1>
-  <p>網址可能打錯了，或是這份課表已經停止分享。</p>
-  <a href="{% url 'home' %}" class="button button-block">回到首頁</a>
+  <h1>{% translate "Page not found" %}</h1>
+  <p>{% translate "The address may be wrong, or this timetable is no longer shared." %}</p>
+  <a href="{% url 'home' %}" class="button button-block">{% translate "Back to home" %}</a>
 </section>
 {% endblock %}

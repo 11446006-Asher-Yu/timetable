@@ -12,7 +12,10 @@
       input.select();
       document.execCommand('copy');
     }
-    button.textContent = '已複製！';
-    setTimeout(() => { button.textContent = '複製連結'; }, 2000);
+    // 按鈕原本的文字與「已複製」都由頁面依目前語言提供
+    const original = button.dataset.label || button.textContent;
+    button.dataset.label = original;
+    button.textContent = button.dataset.copied;
+    setTimeout(() => { button.textContent = original; }, 2000);
   });
 })();

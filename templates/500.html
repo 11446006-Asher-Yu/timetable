@@ -1,14 +1,15 @@
+{% load i18n %}
 {# 伺服器錯誤時拿不到一般的頁面資料，所以不繼承 base.html #}
 <!DOCTYPE html>
-<html lang="zh-Hant-TW">
+<html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>系統發生錯誤｜線上個人課表</title>
+  <title>{% translate "Something went wrong" %} | {% translate "Online Timetable" %}</title>
 </head>
-<body style="font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif; text-align: center; padding: 64px 16px;">
-  <h1>系統發生錯誤</h1>
-  <p>請稍後再試。如果一直出現這個畫面，請聯絡網站管理者。</p>
-  <p><a href="/">回到首頁</a></p>
+<body style="font-family: system-ui, 'Noto Sans TC', 'Microsoft JhengHei', sans-serif; text-align: center; padding: 64px 16px;">
+  <h1>{% translate "Something went wrong" %}</h1>
+  <p>{% translate "Please try again later. If this keeps happening, contact the site administrator." %}</p>
+  <p><a href="/">{% translate "Back to home" %}</a></p>
 </body>
 </html>

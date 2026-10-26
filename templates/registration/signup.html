@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
-{% block title %}註冊｜線上個人課表{% endblock %}
+{% block title %}{% translate "Sign up" %} | {% translate "Online Timetable" %}{% endblock %}
 
 {% block content %}
 <section class="card auth-card">
-  <h1>註冊</h1>
+  <h1>{% translate "Sign up" %}</h1>
   <form method="post">
     {% csrf_token %}
     {% include '_form_fields.html' %}
-    <button type="submit" class="button button-block">建立帳號</button>
+    <button type="submit" class="button button-block">{% translate "Create account" %}</button>
   </form>
-  <p class="auth-switch">已經有帳號了？<a href="{% url 'login' %}">登入</a></p>
+  <p class="auth-switch">{% translate "Already have an account?" %} <a href="{% url 'login' %}">{% translate "Log in" %}</a></p>
 </section>
 {% endblock %}

@@ -21,5 +21,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # 登入、登出（以及之後的忘記密碼）使用 Django 內建的 auth views
     path('accounts/', include('django.contrib.auth.urls')),
+    # 頁首的 EN／中文 切換鈕送到這裡（Django 內建的 set_language）
+    path('i18n/', include('django.conf.urls.i18n')),
     path('', include('schedule.urls')),
 ]

@@ -29,7 +29,7 @@ class ModelTests(TestCase):
         CourseTime.objects.create(course=course, weekday=4, start_period=p[5], end_period=p[5])
         total = self.user.courses.aggregate(total=Sum('credits'))['total']
         self.assertEqual(total, 3)
-        self.assertEqual(str(course.times.first()), '星期二 第 1–2 節')
+        self.assertEqual(str(course.times.first()), 'Tuesday, periods 1–2')
 
     def test_end_period_before_start_is_invalid(self):
         course = Course.objects.create(owner=self.user, name='英文')
@@ -73,7 +73,7 @@ class AuthTests(TestCase):
         self.client.logout()
         response = self.signup(username='other', email='NEWBIE@example.com')
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '這個 Email 已經註冊過了。')
+        self.assertContains(response, 'This email is already registered.')
         self.assertFalse(get_user_model().objects.filter(username='other').exists())
 
     def test_timetable_requires_login(self):
@@ -136,17 +136,17 @@ class CourseCrudTests(TestCase):
 
     def test_create_requires_at_least_one_time(self):
         response = self.client.post(reverse('course_create'), self.course_data([]))
-        self.assertContains(response, '請至少設定 1 個上課時段。')
+        self.assertContains(response, 'Add at least one class time.')
         self.assertFalse(Course.objects.exists())
 
     def test_overlapping_times_in_same_course_rejected(self):
         response = self.client.post(reverse('course_create'), self.course_data([(2, 1, 3), (2, 3, 4)]))
-        self.assertContains(response, '同一門課的上課時段重疊了')
+        self.assertContains(response, 'Class times of the same course overlap')
         self.assertFalse(Course.objects.exists())
 
     def test_end_before_start_rejected(self):
         response = self.client.post(reverse('course_create'), self.course_data([(1, 4, 2)]))
-        self.assertContains(response, '結束節次不可早於開始節次。')
+        self.assertContains(response, 'End period cannot be earlier than start period.')
         self.assertFalse(Course.objects.exists())
 
     def test_update_course_and_delete_one_time(self):
@@ -196,7 +196,7 @@ class TimetableGridTests(TestCase):
 
     def test_empty_grid_shows_weekdays_and_eight_periods(self):
         grid = self.client.get(reverse('timetable')).context['grid']
-        self.assertEqual([d['label'] for d in grid['weekdays']], ['一', '二', '三', '四', '五'])
+        self.assertEqual([d['label'] for d in grid['weekdays']], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'])
         self.assertEqual(len(grid['periods']), 8)
         self.assertEqual(len(grid['cells']), 40)
         self.assertEqual(grid['blocks'], [])
@@ -210,7 +210,7 @@ class TimetableGridTests(TestCase):
     def test_weekend_and_late_periods_extend_grid(self):
         self.add_course('日文', 'other', 2, (6, 2, 3), (1, 9, 10))
         grid = self.client.get(reverse('timetable')).context['grid']
-        self.assertEqual(grid['weekdays'][-1]['label'], '六')
+        self.assertEqual(grid['weekdays'][-1]['label'], 'Sat')
         self.assertEqual(grid['column_count'], 6)
         self.assertEqual(len(grid['periods']), 10)
 
@@ -221,9 +221,9 @@ class TimetableGridTests(TestCase):
         response = self.client.get(reverse('timetable'))
         self.assertEqual(response.context['total_credits'], 8)
         subtotals = {c['label']: c['credits'] for c in response.context['categories']}
-        self.assertEqual(subtotals['必修'], 6)
-        self.assertEqual(subtotals['選修'], 2)
-        self.assertEqual(subtotals['通識'], 0)
+        self.assertEqual(subtotals['Required'], 6)
+        self.assertEqual(subtotals['Elective'], 2)
+        self.assertEqual(subtotals['General education'], 0)
         self.assertEqual(len(response.context['grid']['blocks']), 4)
 
     def test_course_details_for_dialog(self):
@@ -233,7 +233,7 @@ class TimetableGridTests(TestCase):
         response = self.client.get(reverse('timetable'))
         detail = response.context['details'][course.pk]
         self.assertEqual(detail['classroom'], '五教 302')
-        self.assertEqual(detail['times'], ['星期三 第 2–4 節'])
+        self.assertEqual(detail['times'], ['Wednesday, periods 2–4'])
         self.assertEqual(detail['edit_url'], reverse('course_update', args=[course.pk]))
         self.assertContains(response, 'id="course-details"')
         self.assertContains(response, 'id="course-dialog"')
@@ -251,7 +251,7 @@ class TimetableGridTests(TestCase):
         self.add_course('早八', 'required', 3, (2, 1, 2))
         self.add_course('週六課', 'other', 1, (6, 3, 3))
         days = self.client.get(reverse('timetable')).context['grid']['days']
-        self.assertEqual([d['label'] for d in days], ['一', '二', '三', '四', '五', '六'])
+        self.assertEqual([d['label'] for d in days], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'])
         tuesday = next(d for d in days if d['value'] == 2)
         self.assertEqual([b['course'].name for b in tuesday['blocks']], ['早八', '下午課'])
         self.assertEqual(days[0]['blocks'], [])
@@ -288,7 +288,7 @@ class ShareLinkTests(TestCase):
         self.post_action('enable')
         self.client.logout()
         response = self.client.get(self.shared_url())
-        self.assertContains(response, 'student 的課表')
+        self.assertContains(response, 'student’s timetable')
         self.assertContains(response, '統計學')
         self.assertNotIn('edit_url', response.context['details'][self.user.courses.get().pk])
         self.assertNotContains(response, '/edit/')
@@ -325,14 +325,14 @@ class PasswordResetTests(TestCase):
         self.assertRedirects(response, reverse('password_reset_done'))
         self.assertEqual(len(mail.outbox), 1)
         message = mail.outbox[0]
-        self.assertEqual(message.subject, '【線上個人課表】重設密碼')
-        self.assertIn('student 你好', message.body)
+        self.assertEqual(message.subject, '[Online Timetable] Reset your password')
+        self.assertIn('Hi student,', message.body)
 
         link = next(line for line in message.body.splitlines() if '/accounts/reset/' in line)
         path = link.split('testserver', 1)[1]
         # 第一次開啟會轉到不含 token 的網址（Django 的安全設計）
         response = self.client.get(path, follow=True)
-        self.assertContains(response, '設定新密碼')
+        self.assertContains(response, 'Set a new password')
         response = self.client.post(response.redirect_chain[-1][0], {
             'new_password1': 'New-pass-2026!', 'new_password2': 'New-pass-2026!',
         })
@@ -384,7 +384,7 @@ class ConflictTests(TestCase):
     def test_conflict_shows_warning_and_does_not_save(self):
         response = self.post_course(reverse('course_create'), '行銷管理', 3, 4, 5)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '與「統計學」（星期三 第 2–4 節）衝堂')
+        self.assertContains(response, 'Wednesday, periods 4–5 overlaps with “統計學” (Wednesday, periods 2–4)')
         self.assertFalse(Course.objects.filter(name='行銷管理').exists())
 
     def test_conflict_saved_after_confirm(self):
@@ -427,3 +427,84 @@ class StaticStorageTests(TestCase):
 
         # 還沒跑 collectstatic 的檔案不能讓頁面出錯，退回原檔名即可
         self.assertEqual(staticfiles_storage.stored_name('js/not-collected.js'), 'js/not-collected.js')
+
+
+class LanguageTests(TestCase):
+    fixtures = ['periods']
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            'student', email='student@example.com', password='pw-12345678'
+        )
+        course = Course.objects.create(owner=self.user, name='統計學')
+        CourseTime.objects.create(
+            course=course, weekday=3,
+            start_period=Period.objects.get(number=2), end_period=Period.objects.get(number=4),
+        )
+        self.client.force_login(self.user)
+
+    def switch_to_chinese(self):
+        return self.client.post(reverse('set_language'), {'language': 'zh-hant', 'next': reverse('timetable')})
+
+    def test_english_by_default_even_for_chinese_browsers(self):
+        # 台灣使用者的瀏覽器通常送 zh-TW，仍然要先看到英文
+        response = self.client.get(reverse('timetable'), HTTP_ACCEPT_LANGUAGE='zh-TW,zh;q=0.9')
+        self.assertContains(response, '<html lang="en">')
+        self.assertContains(response, 'My timetable')
+        self.assertContains(response, 'value="zh-hant"')  # 切換鈕顯示「中文」
+
+    def test_switch_to_chinese_and_back(self):
+        response = self.switch_to_chinese()
+        self.assertRedirects(response, reverse('timetable'))
+        response = self.client.get(reverse('timetable'))
+        self.assertContains(response, '<html lang="zh-Hant-TW">')
+        self.assertContains(response, '我的課表')
+        self.assertEqual([d['label'] for d in response.context['grid']['weekdays']], ['一', '二', '三', '四', '五'])
+        self.assertEqual(response.context['details'][self.user.courses.get().pk]['times'], ['星期三 第 2–4 節'])
+
+        self.client.post(reverse('set_language'), {'language': 'en', 'next': reverse('timetable')})
+        self.assertContains(self.client.get(reverse('timetable')), 'My timetable')
+
+    def test_chinese_messages_and_email(self):
+        from django.core import mail
+
+        self.switch_to_chinese()
+        data = {
+            'name': '行銷管理', 'teacher': '', 'classroom': '', 'credits': 2,
+            'category': 'elective', 'color': '', 'note': '',
+            'times-TOTAL_FORMS': 1, 'times-INITIAL_FORMS': 0,
+            'times-MIN_NUM_FORMS': 1, 'times-MAX_NUM_FORMS': 1000,
+            'times-0-weekday': 3,
+            'times-0-start_period': Period.objects.get(number=4).pk,
+            'times-0-end_period': Period.objects.get(number=5).pk,
+        }
+        response = self.client.post(reverse('course_create'), data)
+        self.assertContains(response, '星期三 第 4–5 節 與「統計學」（星期三 第 2–4 節）衝堂')
+
+        self.client.logout()  # 測試用戶端登出會清掉所有 Cookie，要重新選一次語言
+        self.switch_to_chinese()
+        self.client.post(reverse('password_reset'), {'email': 'student@example.com'})
+        self.assertEqual(mail.outbox[0].subject, '【線上個人課表】重設密碼')
+        self.assertIn('student 你好', mail.outbox[0].body)
+
+    def test_every_string_has_a_chinese_translation(self):
+        import sys
+        from pathlib import Path
+
+        from django.conf import settings
+        from django.utils import translation
+
+        sys.path.insert(0, str(Path(settings.BASE_DIR) / 'scripts'))
+        from i18n_tools import extract
+
+        same_in_both = {'Email'}
+        with translation.override('zh-hant'):
+            for (context, msgid, plural) in extract():
+                if plural:
+                    result = translation.ngettext(msgid, plural, 2)
+                elif context:
+                    result = translation.pgettext(context, msgid)
+                else:
+                    result = translation.gettext(msgid)
+                if msgid not in same_in_both:
+                    self.assertNotEqual(result, msgid if not plural else plural, f'缺少翻譯：{msgid!r}')

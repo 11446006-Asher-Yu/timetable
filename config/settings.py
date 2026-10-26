@@ -58,6 +58,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'schedule.middleware.CookieLocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -77,6 +78,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.i18n',
             ],
         },
     },
@@ -122,7 +124,16 @@ LOGOUT_REDIRECT_URL = 'home'
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'zh-hant'
+# 介面以英文為主，使用者可在頁首切換成繁體中文（選擇記在 Cookie）
+LANGUAGE_CODE = 'en'
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('zh-hant', '繁體中文'),
+]
+
+# 中文翻譯檔：locale/zh_Hant/LC_MESSAGES/django.po，改完用 scripts/compile_messages.py 編譯
+LOCALE_PATHS = [BASE_DIR / 'locale']
 
 TIME_ZONE = 'Asia/Taipei'
 
@@ -173,7 +184,7 @@ else:
         },
     }
 
-DEFAULT_FROM_EMAIL = f'線上個人課表 <{EMAIL_ACCOUNT or "noreply@localhost"}>'
+DEFAULT_FROM_EMAIL = f'Online Timetable <{EMAIL_ACCOUNT or "noreply@localhost"}>'
 
 # 重設密碼連結的有效時間（秒）
 PASSWORD_RESET_TIMEOUT = 60 * 60 * 24

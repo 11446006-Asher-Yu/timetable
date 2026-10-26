@@ -1,6 +1,8 @@
 // 課表頁：課程詳細資料視窗、標出今天與上課中的課、手機版星期分頁、列印與匯出圖片
 (function () {
   const details = JSON.parse(document.getElementById('course-details').textContent);
+  // 介面文字由頁面依目前語言提供（見 _timetable_scripts.html）
+  const text = JSON.parse(document.getElementById('ui-text').textContent);
   const dialog = document.getElementById('course-dialog');
   // 系統設定「減少動態效果」時，JavaScript 動畫也一併略過
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -20,8 +22,9 @@
     document.getElementById('dialog-header').style.setProperty('--course-color', course.color);
     setText('dialog-teacher', course.teacher);
     setText('dialog-classroom', course.classroom);
-    setText('dialog-credits', `${course.credits} 學分`);
-    setText('dialog-times', course.times.join('、'));
+    const creditText = course.credits === 1 ? text.creditOne : text.credits;
+    setText('dialog-credits', creditText.replace('{n}', course.credits));
+    setText('dialog-times', course.times.join(text.listSeparator));
     setText('dialog-note', course.note);
 
     // 分享頁（唯讀）沒有修改、刪除網址，整列按鈕隱藏
@@ -216,11 +219,11 @@
   const exportButton = document.getElementById('export-button');
   exportButton.addEventListener('click', async function () {
     if (typeof html2canvas !== 'function') {
-      alert('匯出元件載入失敗，請確認網路連線後重新整理頁面。');
+      alert(text.exportLoadFailed);
       return;
     }
     exportButton.disabled = true;
-    exportButton.textContent = '匯出中…';
+    exportButton.textContent = text.exporting;
     try {
       const canvas = await html2canvas(document.getElementById('export-area'), {
         backgroundColor: '#FFFFFF',
@@ -229,15 +232,15 @@
         onclone: (doc) => doc.documentElement.classList.add('is-exporting'),
       });
       const link = document.createElement('a');
-      link.download = '我的課表.png';
+      link.download = `${text.exportFileName}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (error) {
       console.error(error);
-      alert('匯出圖片失敗，請稍後再試。');
+      alert(text.exportFailed);
     } finally {
       exportButton.disabled = false;
-      exportButton.textContent = '匯出圖片';
+      exportButton.textContent = text.exportImage;
     }
   });
 })();

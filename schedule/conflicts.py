@@ -1,17 +1,13 @@
 """跨課程衝堂：新增／修改課程時的檢查，以及課表上衝堂課程的並排位置。"""
 
-from .models import CourseTime
+from django.utils.translation import gettext
+
+from .models import CourseTime, describe_time
 
 
 def overlaps(weekday_a, start_a, end_a, weekday_b, start_b, end_b):
     """兩個時段是否同一天且節次有重疊（節次以編號表示，含頭尾）。"""
     return weekday_a == weekday_b and start_a <= end_b and start_b <= end_a
-
-
-def describe(weekday, start, end):
-    day = CourseTime.Weekday(weekday).label
-    periods = f'第 {start} 節' if start == end else f'第 {start}–{end} 節'
-    return f'{day} {periods}'
 
 
 def find_conflicts(owner, new_times, exclude_course=None):
@@ -29,9 +25,11 @@ def find_conflicts(owner, new_times, exclude_course=None):
     for weekday, start, end in new_times:
         for other in others:
             if overlaps(weekday, start, end, other.weekday, other.start_period.number, other.end_period.number):
-                messages.append(
-                    f'{describe(weekday, start, end)} 與「{other.course.name}」（{other}）衝堂'
-                )
+                messages.append(gettext('%(time)s overlaps with “%(course)s” (%(other)s)') % {
+                    'time': describe_time(weekday, start, end),
+                    'course': other.course.name,
+                    'other': other,
+                })
     return messages
 
 

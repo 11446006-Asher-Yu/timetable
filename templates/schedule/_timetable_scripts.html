@@ -1,6 +1,17 @@
-{% load static %}
+{% load static i18n %}
 {% include 'schedule/_course_dialog.html' %}
 {{ details|json_script:'course-details' }}
+{# JavaScript 會用到的介面文字，依目前語言從這裡取得 #}
+<script type="application/json" id="ui-text">{
+  "creditOne": "{% translate '{n} credit' %}",
+  "credits": "{% translate '{n} credits' %}",
+  "listSeparator": "{% translate ', ' context 'list separator' %}",
+  "exporting": "{% translate 'Exporting…' %}",
+  "exportImage": "{% translate 'Export image' %}",
+  "exportFileName": "{% translate 'timetable' %}",
+  "exportLoadFailed": "{% translate 'The export tool failed to load. Check your connection and reload the page.' %}",
+  "exportFailed": "{% translate 'Export failed. Please try again later.' %}"
+}</script>
 {# 匯出圖片用的 html2canvas，從 cdnjs 載入固定版本 #}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 <script src="{% static 'js/timetable.js' %}" defer></script>
