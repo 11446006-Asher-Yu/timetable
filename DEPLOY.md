@@ -2,12 +2,23 @@
 
 以下指令中的 `<帳號>` 請換成你的 PythonAnywhere 使用者名稱，網站網址會是 `https://<帳號>.pythonanywhere.com`。
 
-> ⚠️ 標示「待確認」的項目是撰寫時還沒在 PythonAnywhere 上實際驗證過的，部署時請留意畫面上的實際選項。
+> ✅ 本文件已在 2026/10/26 實際部署驗證過：帳號 `Asher`，網址 https://asher.pythonanywhere.com，Python 3.13。
+> 仍標示「待確認」的只剩 Gmail 寄信。
+
+## 目前的部署
+
+| 項目 | 值 |
+|---|---|
+| 網址 | https://asher.pythonanywhere.com |
+| 程式碼 | `/home/Asher/timetable` |
+| 虛擬環境 | `/home/Asher/.virtualenvs/timetable-venv`（Python 3.13） |
+| WSGI 設定檔 | `/var/www/asher_pythonanywhere_com_wsgi.py`（原始檔備份在 `~/wsgi_backup.py`） |
+| 停用日 | 2026/11/26（每月要延長一次，見第 7 節） |
 
 ## 0. 事前確認
 
-- **Python 版本**：本專案使用 Django 6.1，需要 **Python 3.12 以上**。在 Web 頁面新增網站時，請確認可以選到 3.12 以上的版本。
-  - 如果最高只有 3.11 以下，**先不要繼續**：要改用 Django 5.2，寄信設定也要跟著改。
+- **Python 版本**：本專案使用 Django 6.1，需要 **Python 3.12 以上**。PythonAnywhere 目前可選 3.7～3.13，請選 **3.13**。
+- **網域大小寫**：後台顯示的網域是 `Asher.pythonanywhere.com`（保留帳號大小寫），但瀏覽器和檔名都會轉成小寫 `asher`，兩者都能用。
 - **GitHub repo 公開或私人**：私人 repo 在 `git clone` 時需要登入，建議改用 GitHub 的 Personal Access Token。
 
 ## 1. 下載程式碼並安裝套件
@@ -17,39 +28,25 @@
 ```bash
 git clone https://github.com/11446006-Asher-Yu/timetable.git
 cd timetable
-mkvirtualenv --python=python3.12 timetable-venv   # 版本號換成你在 0. 確認的版本
+mkvirtualenv --python=python3.13 timetable-venv   # 版本號要和第 4 步網站選的一樣
 pip install -r requirements.txt
 ```
+
+`pip install` 在免費方案大約要 1 分鐘，期間畫面可能沒有輸出，等提示字元重新出現即可。
 
 `mkvirtualenv` 完成後，提示字元前面會出現 `(timetable-venv)`。之後重開 console 要先執行 `workon timetable-venv`。
 
 ## 2. 建立 .env（機密設定，不會上傳 GitHub）
 
-先產生一組新的金鑰，**不要沿用本機的那組**：
+用下面這行指令直接產生 `.env`。金鑰由伺服器隨機產生並寫進檔案，**不會顯示在畫面上**，也不會沿用本機那組。`<帳號>` 請換成小寫的帳號名稱：
 
 ```bash
-python -c "from django.core.management.utils import get_random_secret_key as g; print(g())"
+python -c "from django.core.management.utils import get_random_secret_key as g; open('.env','w').write('DJANGO_SECRET_KEY='+g()+'\nDJANGO_DEBUG=False\nDJANGO_ALLOWED_HOSTS=<帳號>.pythonanywhere.com\nEMAIL_HOST_USER=\nEMAIL_HOST_PASSWORD=\n')" && chmod 600 .env && grep -v SECRET .env
 ```
 
-再用編輯器建立 `.env`：
+最後的 `grep` 只會列出金鑰以外的設定，方便確認內容。
 
-```bash
-nano .env
-```
-
-內容如下，`<帳號>` 和金鑰換成實際值：
-
-```
-DJANGO_SECRET_KEY=剛才產生的那串金鑰
-DJANGO_DEBUG=False
-DJANGO_ALLOWED_HOSTS=<帳號>.pythonanywhere.com
-
-# 要測試忘記密碼寄信時才填，留白則信件不會寄出
-EMAIL_HOST_USER=
-EMAIL_HOST_PASSWORD=
-```
-
-存檔：`Ctrl+O` → `Enter` → `Ctrl+X`。
+要測試忘記密碼寄信時，再用 `nano .env` 填入 `EMAIL_HOST_USER`（Gmail 帳號）和 `EMAIL_HOST_PASSWORD`（Google 帳戶的「應用程式密碼」）。存檔：`Ctrl+O` → `Enter` → `Ctrl+X`，然後到 Web 頁面按 Reload。
 
 ## 3. 建立資料庫、匯入節次、整理靜態檔
 
@@ -63,10 +60,10 @@ python manage.py createsuperuser   # 建立後台管理員，密碼自己設定
 ## 4. 設定網站（Web 頁面）
 
 1. 到 **Web** 頁面，按 **Add a new web app**。
-2. 網域選預設的 `<帳號>.pythonanywhere.com`。
-3. 框架選 **Manual configuration**（不要選「Django」，那個選項會另外建一個新專案）。
-4. Python 版本選和第 1 步 `mkvirtualenv` 相同的版本。
-5. 建立完成後，在 Web 頁面設定以下項目：
+2. 免費帳號不能自訂網域，直接按 **Next**，網域會是 `<帳號>.pythonanywhere.com`。
+3. 框架選 **Manual configuration (including virtualenvs)**（不要選「Django」，那個選項會另外建一個新專案）。
+4. Python 版本選 **3.13**（和第 1 步 `mkvirtualenv` 相同），再按 **Next** 完成建立。
+5. 建立完成後，在 Web 頁面設定以下項目。每個欄位都是**點一下文字才會出現輸入框**，填好按 Enter 或打勾鈕儲存：
 
 | 區塊 | 欄位 | 填入 |
 |---|---|---|
@@ -74,9 +71,9 @@ python manage.py createsuperuser   # 建立後台管理員，密碼自己設定
 | Code | Working directory | `/home/<帳號>/timetable` |
 | Virtualenv | 路徑 | `/home/<帳號>/.virtualenvs/timetable-venv` |
 | Static files | URL：`/static/` | Directory：`/home/<帳號>/timetable/staticfiles` |
-| Security | Force HTTPS（待確認：有這個選項就開啟） | Enabled |
+| Security | Force HTTPS | Enabled（開啟後 http 會自動轉到 https） |
 
-6. 點 **Code** 區塊裡的 **WSGI configuration file** 連結（檔名類似 `/var/www/<帳號>_pythonanywhere_com_wsgi.py`），**把內容全部刪掉**，換成：
+6. 改寫 WSGI 設定檔（檔名是 `/var/www/<小寫帳號>_pythonanywhere_com_wsgi.py`）。可以點 **Code** 區塊裡的 **WSGI configuration file** 連結用網頁編輯器改，**把內容全部刪掉**，換成下面的內容。也可以在 Bash console 先備份再覆寫：`cp /var/www/<小寫帳號>_pythonanywhere_com_wsgi.py ~/wsgi_backup.py`。
 
 ```python
 import os
@@ -102,9 +99,11 @@ application = get_wsgi_application()
 - [ ] 「上課中」標示時間正確
 - [ ] 手機開啟，畫面是星期分頁
 - [ ] 匯出圖片、列印
-- [ ] 開啟分享，用無痕視窗開分享連結；**分享網址開頭要是 `https://`**
-- [ ] 忘記密碼（有填 Gmail 時）：確認信件能寄到。待確認：免費方案能否連到 Gmail 寄信
+- [ ] 開啟分享，用無痕視窗開分享連結；**分享網址開頭要是 `https://`**（待確認）
+- [ ] 忘記密碼（有填 Gmail 時）：確認信件能寄到（待確認：免費方案能否連到 Gmail 寄信）
 - [ ] `https://<帳號>.pythonanywhere.com/admin/` 能用管理員帳號登入
+
+2026/10/26 部署後已確認：首頁樣式正常、http 自動轉 https、登入／註冊／忘記密碼頁正常、未登入開課表會轉到登入頁、不存在的分享連結顯示中文 404、後台登入頁正常。
 
 出現錯誤時，到 Web 頁面最下方的 **Log files** 看 **Error log**。
 
@@ -125,5 +124,6 @@ python manage.py collectstatic --noinput
 
 ## 7. 免費方案注意事項
 
-- 免費網站有使用期限，Web 頁面會顯示到期日，要定期回來按延長的按鈕，否則網站會停用。**繳交後、老師評分前記得確認還沒到期。**
-- 免費方案對外連線有限制，寄信（Gmail）是否可用要實測。
+- **每個月要延長一次**：至少每個月登入一次，到 Web 頁面按「**Run until 1 month from today**」，否則網站會停用。停用前一週 PythonAnywhere 會寄信提醒。目前停用日是 **2026/11/26**，**老師評分前記得確認還沒到期。**
+- 免費方案對外連線有限制，寄信（Gmail）是否可用要實測（待確認）。
+- 檔案空間上限 512 MB，CPU 每天 100 秒；本專案只用到很小一部分。
