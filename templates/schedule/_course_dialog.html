@@ -1,0 +1,19 @@
+{# 課程詳細資料視窗；內容由 static/js/timetable.js 依 course-details 填入 #}
+<dialog id="course-dialog" class="course-dialog" aria-labelledby="dialog-title">
+  <div class="dialog-header" id="dialog-header">
+    <h2 id="dialog-title"></h2>
+    <button type="button" class="dialog-close" data-close aria-label="關閉">✕</button>
+  </div>
+  <dl class="dialog-body">
+    <dt>類別</dt><dd><span class="tag" id="dialog-category"></span></dd>
+    <dt>老師</dt><dd id="dialog-teacher"></dd>
+    <dt>教室</dt><dd id="dialog-classroom"></dd>
+    <dt>學分</dt><dd id="dialog-credits"></dd>
+    <dt>時段</dt><dd id="dialog-times"></dd>
+    <dt>備註</dt><dd id="dialog-note"></dd>
+  </dl>
+  <div class="dialog-actions" id="dialog-actions">
+    <a class="button button-outline" id="dialog-edit">修改</a>
+    <a class="button button-danger" id="dialog-delete">刪除</a>
+  </div>
+</dialog>

@@ -225,3 +225,23 @@ class TimetableGridTests(TestCase):
         self.assertEqual(subtotals['選修'], 2)
         self.assertEqual(subtotals['通識'], 0)
         self.assertEqual(len(response.context['grid']['blocks']), 4)
+
+    def test_course_details_for_dialog(self):
+        course = self.add_course('統計學', 'required', 3, (3, 2, 4))
+        course.classroom = '五教 302'
+        course.save()
+        response = self.client.get(reverse('timetable'))
+        detail = response.context['details'][course.pk]
+        self.assertEqual(detail['classroom'], '五教 302')
+        self.assertEqual(detail['times'], ['星期三 第 2–4 節'])
+        self.assertEqual(detail['edit_url'], reverse('course_update', args=[course.pk]))
+        self.assertContains(response, 'id="course-details"')
+        self.assertContains(response, 'id="course-dialog"')
+
+    def test_grid_has_data_for_today_and_current_highlight(self):
+        self.add_course('統計學', 'required', 3, (3, 2, 4))
+        response = self.client.get(reverse('timetable'))
+        self.assertContains(response, 'data-start="09:10"')
+        self.assertContains(response, 'data-weekday="3"')
+        self.assertContains(response, 'data-start="2"')
+        self.assertContains(response, 'data-end="4"')

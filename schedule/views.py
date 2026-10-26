@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from .forms import CourseForm, CourseTimeFormSet, SignUpForm
 from .models import Course, CourseTime, Period
@@ -63,12 +64,33 @@ def build_grid(courses):
         'weekdays': [{'value': day, 'label': day.label[-1], 'column': column_of[day]} for day in weekdays],
         'periods': [{'period': period, 'row': row_of[period.number]} for period in periods],
         'cells': [
-            {'row': row_of[period.number], 'column': column_of[day]}
+            {'row': row_of[period.number], 'column': column_of[day], 'weekday': day}
             for period in periods for day in weekdays
         ],
         'blocks': blocks,
         'column_count': len(weekdays),
     }
+
+
+def course_details(courses, can_edit):
+    """詳細資料視窗用的資料，以 json_script 交給前端 JavaScript。"""
+    details = {}
+    for course in courses:
+        item = {
+            'name': course.name,
+            'category': course.get_category_display(),
+            'color': course.display_color,
+            'teacher': course.teacher,
+            'classroom': course.classroom,
+            'credits': course.credits,
+            'times': [str(time) for time in course.times.all()],
+            'note': course.note,
+        }
+        if can_edit:
+            item['edit_url'] = reverse('course_update', args=[course.pk])
+            item['delete_url'] = reverse('course_delete', args=[course.pk])
+        details[course.pk] = item
+    return details
 
 
 @login_required
@@ -91,6 +113,7 @@ def timetable(request):
     return render(request, 'schedule/timetable.html', {
         'courses': courses,
         'grid': build_grid(courses),
+        'details': course_details(courses, can_edit=True),
         'categories': categories,
         'total_credits': sum(subtotals.values()),
     })

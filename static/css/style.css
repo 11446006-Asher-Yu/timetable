@@ -429,6 +429,112 @@ a {
   font-size: 0.75rem;
 }
 
+/* ===== 今天與上課中 ===== */
+.tt-day.is-today {
+  background: var(--color-primary);
+  color: #FFFFFF;
+}
+
+.tt-cell.is-today {
+  background: #EEF4FB;
+}
+
+.tt-period.is-now {
+  background: var(--color-primary);
+  color: #FFFFFF;
+}
+
+.tt-period.is-now .tt-period-time {
+  color: #FFFFFF;
+}
+
+.tt-now-badge {
+  display: none;
+}
+
+.tt-course.is-current {
+  outline: 3px solid var(--course-color);
+  outline-offset: -1px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.tt-course.is-current .tt-now-badge {
+  display: inline-block;
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--course-color);
+  color: #FFFFFF;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* ===== 課程詳細資料視窗 ===== */
+.course-dialog {
+  width: min(420px, calc(100% - 32px));
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.course-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 6px solid var(--course-color, var(--color-primary));
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.dialog-close {
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  color: var(--color-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.dialog-body {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 16px 20px;
+}
+
+.dialog-body dt {
+  color: var(--color-muted);
+}
+
+.dialog-body dd {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 0 20px 20px;
+}
+
+.dialog-actions[hidden] {
+  display: none;
+}
+
 /* ===== 課程清單 ===== */
 .course-list-card {
   margin-top: 16px;
