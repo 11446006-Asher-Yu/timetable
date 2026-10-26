@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}找不到頁面｜線上個人課表{% endblock %}
+
+{% block content %}
+<section class="card auth-card">
+  <h1>找不到這個頁面</h1>
+  <p>網址可能打錯了，或是這份課表已經停止分享。</p>
+  <a href="{% url 'home' %}" class="button button-block">回到首頁</a>
+</section>
+{% endblock %}

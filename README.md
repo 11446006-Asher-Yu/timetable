@@ -10,7 +10,12 @@ python -m venv .venv
 pip install -r requirements.txt
 copy .env.example .env      # 再把 DJANGO_SECRET_KEY 改成隨機字串
 python manage.py migrate
+python manage.py loaddata periods   # 匯入節次資料
 python manage.py runserver
 ```
 
 開啟 http://127.0.0.1:8000/
+
+## 部署
+
+部署到 PythonAnywhere 的步驟見 [DEPLOY.md](DEPLOY.md)。
