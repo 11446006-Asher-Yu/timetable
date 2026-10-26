@@ -1,0 +1,142 @@
+[
+  {
+    "model": "schedule.period",
+    "pk": 1,
+    "fields": {
+      "number": 1,
+      "label": "第 1 節",
+      "start_time": "08:10",
+      "end_time": "09:00"
+    }
+  },
+  {
+    "model": "schedule.period",
+    "pk": 2,
+    "fields": {
+      "number": 2,
+      "label": "第 2 節",
+      "start_time": "09:10",
+      "end_time": "10:00"
+    }
+  },
+  {
+    "model": "schedule.period",
+    "pk": 3,
+    "fields": {
+      "number": 3,
+      "label": "第 3 節",
+      "start_time": "10:10",
+      "end_time": "11:00"
+    }
+  },
+  {
+    "model": "schedule.period",
+    "pk": 4,
+    "fields": {
+      "number": 4,
+      "label": "第 4 節",
+      "start_time": "11:10",
+      "end_time": "12:00"
+    }
+  },
+  {
+    "model": "schedule.period",
+    "pk": 5,
+    "fields": {
+      "number": 5,
+      "label": "第 5 節",
+      "start_time": "12:10",
+      "end_time": "13:00"
+    }
+  },
+  {
+    "model": "schedule.period",
+    "pk": 6,
+    "fields": {
+      "number": 6,
+      "label": "第 6 節",
+      "start_time": "13:10",
+      "end_time": "14:00"
+    }
+  },
+  {
+    "model": "schedule.period",
+    "pk": 7,
+    "fields": {
+      "number": 7,
+      "label": "第 7 節",
+      "start_time": "14:10",
+      "end_time": "15:00"
+    }
+  },
+  {
+    "model": "schedule.period",
+    "pk": 8,
+    "fields": {
+      "number": 8,
+      "label": "第 8 節",
+      "start_time": "15:10",
+      "end_time": "16:00"
+    }
+  },
+  {
+    "model": "schedule.period",
+    "pk": 9,
+    "fields": {
+      "number": 9,
+      "label": "第 9 節",
+      "start_time": "16:10",
+      "end_time": "17:00"
+    }
+  },
+  {
+    "model": "schedule.period",
+    "pk": 10,
+    "fields": {
+      "number": 10,
+      "label": "第 10 節",
+      "start_time": "17:10",
+      "end_time": "18:00"
+    }
+  },
+  {
+    "model": "schedule.period",
+    "pk": 11,
+    "fields": {
+      "number": 11,
+      "label": "第 11 節",
+      "start_time": "18:10",
+      "end_time": "19:00"
+    }
+  },
+  {
+    "model": "schedule.period",
+    "pk": 12,
+    "fields": {
+      "number": 12,
+      "label": "第 12 節",
+      "start_time": "19:10",
+      "end_time": "20:00"
+    }
+  },
+  {
+    "model": "schedule.period",
+    "pk": 13,
+    "fields": {
+      "number": 13,
+      "label": "第 13 節",
+      "start_time": "20:10",
+      "end_time": "21:00"
+    }
+  },
+  {
+    "model": "schedule.period",
+    "pk": 14,
+    "fields": {
+      "number": 14,
+      "label": "第 14 節",
+      "start_time": "21:10",
+      "end_time": "22:00"
+    }
+  }
+]
