@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ owner.username }} 的課表｜線上個人課表{% endblock %}
+
+{% block content %}
+<section class="card timetable-card">
+  <div class="page-heading">
+    <h1>{{ owner.username }} 的課表 <span class="readonly-tag">唯讀</span></h1>
+    <div class="toolbar">
+      <button type="button" class="button button-outline" id="print-button">列印</button>
+      <button type="button" class="button button-outline" id="export-button">匯出圖片</button>
+    </div>
+  </div>
+
+  {% include 'schedule/_timetable_body.html' with can_edit=False %}
+
+  {% if not grid.blocks %}
+    <p class="empty">這份課表目前沒有課程。</p>
+  {% endif %}
+</section>
+
+{% if not user.is_authenticated %}
+  <p class="share-cta">想做一份自己的課表？<a href="{% url 'signup' %}">免費註冊</a></p>
+{% endif %}
+
+{% include 'schedule/_timetable_scripts.html' %}
+{% endblock %}

@@ -261,3 +261,90 @@ class TimetableGridTests(TestCase):
         self.assertContains(response, 'id="print-button"')
         self.assertContains(response, 'id="export-button"')
         self.assertContains(response, 'html2canvas/1.4.1/html2canvas.min.js')
+
+
+class ShareLinkTests(TestCase):
+    fixtures = ['periods']
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user('student', password='pw-12345678')
+        course = Course.objects.create(owner=self.user, name='統計學', note='期中考 11/20')
+        p = Period.objects.get(number=2)
+        CourseTime.objects.create(course=course, weekday=3, start_period=p, end_period=p)
+        self.client.force_login(self.user)
+
+    def post_action(self, action):
+        return self.client.post(reverse('share_settings'), {'action': action})
+
+    def shared_url(self):
+        return reverse('shared_timetable', args=[ShareLink.objects.get(user=self.user).token])
+
+    def test_link_is_off_by_default(self):
+        self.client.get(reverse('share_settings'))
+        self.client.logout()
+        self.assertEqual(self.client.get(self.shared_url()).status_code, 404)
+
+    def test_enabled_link_is_read_only_for_visitors(self):
+        self.post_action('enable')
+        self.client.logout()
+        response = self.client.get(self.shared_url())
+        self.assertContains(response, 'student 的課表')
+        self.assertContains(response, '統計學')
+        self.assertNotIn('edit_url', response.context['details'][self.user.courses.get().pk])
+        self.assertNotContains(response, '/edit/')
+        self.assertNotContains(response, '/delete/')
+
+    def test_disable_turns_link_off(self):
+        self.post_action('enable')
+        self.post_action('disable')
+        self.assertEqual(self.client.get(self.shared_url()).status_code, 404)
+
+    def test_regenerate_invalidates_old_link(self):
+        self.post_action('enable')
+        old_url = self.shared_url()
+        self.post_action('regenerate')
+        self.assertEqual(self.client.get(old_url).status_code, 404)
+        self.assertEqual(self.client.get(self.shared_url()).status_code, 200)
+
+    def test_share_settings_requires_login(self):
+        self.client.logout()
+        response = self.client.get(reverse('share_settings'))
+        self.assertRedirects(response, f"{reverse('login')}?next={reverse('share_settings')}")
+
+
+class PasswordResetTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            'student', email='student@example.com', password='Old-pass-2026'
+        )
+
+    def test_reset_flow_sends_mail_and_changes_password(self):
+        from django.core import mail
+
+        response = self.client.post(reverse('password_reset'), {'email': 'STUDENT@example.com'})
+        self.assertRedirects(response, reverse('password_reset_done'))
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.subject, '【線上個人課表】重設密碼')
+        self.assertIn('student 你好', message.body)
+
+        link = next(line for line in message.body.splitlines() if '/accounts/reset/' in line)
+        path = link.split('testserver', 1)[1]
+        # 第一次開啟會轉到不含 token 的網址（Django 的安全設計）
+        response = self.client.get(path, follow=True)
+        self.assertContains(response, '設定新密碼')
+        response = self.client.post(response.redirect_chain[-1][0], {
+            'new_password1': 'New-pass-2026!', 'new_password2': 'New-pass-2026!',
+        })
+        self.assertRedirects(response, reverse('password_reset_complete'))
+        self.assertTrue(self.client.login(username='student', password='New-pass-2026!'))
+
+    def test_unknown_email_gets_same_page_but_no_mail(self):
+        from django.core import mail
+
+        response = self.client.post(reverse('password_reset'), {'email': 'nobody@example.com'})
+        self.assertRedirects(response, reverse('password_reset_done'))
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_login_page_links_to_reset(self):
+        self.assertContains(self.client.get(reverse('login')), reverse('password_reset'))

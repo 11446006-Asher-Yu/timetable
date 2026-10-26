@@ -1,0 +1,6 @@
+{% load static %}
+{% include 'schedule/_course_dialog.html' %}
+{{ details|json_script:'course-details' }}
+{# 匯出圖片用的 html2canvas，從 cdnjs 載入固定版本 #}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<script src="{% static 'js/timetable.js' %}" defer></script>

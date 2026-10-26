@@ -1,0 +1,94 @@
+{# 課表本體，「我的課表」與分享頁共用。需要 owner、grid、categories、total_credits、can_edit #}
+
+{# 匯出圖片與列印的範圍 #}
+<div id="export-area">
+  <h2 class="export-title">{{ owner.username }} 的課表</h2>
+
+  <div class="credit-summary">
+    <span class="credit-total">總學分 <strong>{{ total_credits }}</strong></span>
+    {% for category in categories %}
+      {% if category.credits %}<span class="credit-sub">{{ category.label }} {{ category.credits }}</span>{% endif %}
+    {% endfor %}
+  </div>
+
+  <ul class="legend" aria-label="類別圖例">
+    {% for category in categories %}
+      <li><span class="legend-swatch" style="--course-color: {{ category.color }}"></span>{{ category.label }}</li>
+    {% endfor %}
+  </ul>
+
+  {# ===== 電腦版：課表格子 ===== #}
+  <div class="timetable-scroll">
+    <div class="timetable" style="--day-count: {{ grid.column_count }}">
+      <div class="tt-corner" style="grid-row: 1; grid-column: 1">節次</div>
+      {% for day in grid.weekdays %}
+        <div class="tt-day" data-weekday="{{ day.value }}" style="grid-row: 1; grid-column: {{ day.column }}">{{ day.label }}</div>
+      {% endfor %}
+
+      {% for item in grid.periods %}
+        <div class="tt-period"
+             data-number="{{ item.period.number }}"
+             data-start="{{ item.period.start_time|time:'H:i' }}"
+             data-end="{{ item.period.end_time|time:'H:i' }}"
+             style="grid-row: {{ item.row }}; grid-column: 1">
+          <span class="tt-period-number">{{ item.period.number }}</span>
+          <span class="tt-period-time">{{ item.period.start_time|time:'H:i' }}</span>
+        </div>
+      {% endfor %}
+
+      {% for cell in grid.cells %}
+        <div class="tt-cell" data-weekday="{{ cell.weekday }}" style="grid-row: {{ cell.row }}; grid-column: {{ cell.column }}"></div>
+      {% endfor %}
+
+      {# 有 JavaScript 時點擊會開啟詳細資料視窗；沒有時，擁有者連到修改頁 #}
+      {% for block in grid.blocks %}
+        {# --course-tint：類別色加上 22% 不透明度（十六進位 38），當作方塊底色 #}
+        <a class="tt-course"
+           href="{% if can_edit %}{% url 'course_update' block.course.pk %}{% else %}#course-{{ block.course.pk }}{% endif %}"
+           data-course-id="{{ block.course.pk }}"
+           data-weekday="{{ block.time.weekday }}"
+           data-start="{{ block.time.start_period.number }}"
+           data-end="{{ block.time.end_period.number }}"
+           style="grid-row: {{ block.row }} / span {{ block.span }}; grid-column: {{ block.column }}; --course-color: {{ block.course.display_color }}; --course-tint: {{ block.course.display_color }}38"
+           title="{{ block.course.name }}｜{{ block.time }}">
+          <span class="tt-course-name">{{ block.course.name }}</span>
+          {% if block.course.classroom %}<span class="tt-course-room">{{ block.course.classroom }}</span>{% endif %}
+          <span class="now-badge">上課中</span>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{# ===== 手機版：依星期分頁 ===== #}
+<div class="mobile-days">
+  <div class="day-tabs" role="tablist" aria-label="選擇星期">
+    {% for day in grid.days %}
+      <button type="button" class="day-tab" role="tab" data-weekday="{{ day.value }}"
+              aria-controls="day-panel-{{ day.value }}">{{ day.label }}</button>
+    {% endfor %}
+  </div>
+  {% for day in grid.days %}
+    <div class="day-panel" id="day-panel-{{ day.value }}" role="tabpanel" data-weekday="{{ day.value }}">
+      <h3 class="day-panel-title">星期{{ day.label }}</h3>
+      {% for block in day.blocks %}
+        <a class="m-course"
+           href="{% if can_edit %}{% url 'course_update' block.course.pk %}{% else %}#course-{{ block.course.pk }}{% endif %}"
+           data-course-id="{{ block.course.pk }}"
+           data-weekday="{{ block.time.weekday }}"
+           data-start="{{ block.time.start_period.number }}"
+           data-end="{{ block.time.end_period.number }}"
+           style="--course-color: {{ block.course.display_color }}; --course-tint: {{ block.course.display_color }}38">
+          <span class="m-course-time">
+            {% if block.span == 1 %}第 {{ block.time.start_period.number }} 節{% else %}第 {{ block.time.start_period.number }}–{{ block.time.end_period.number }} 節{% endif %}
+            {{ block.time.start_period.start_time|time:'H:i' }}–{{ block.time.end_period.end_time|time:'H:i' }}
+          </span>
+          <span class="m-course-name">{{ block.course.name }} <span class="now-badge">上課中</span></span>
+          {% if block.course.classroom %}<span class="m-course-room">{{ block.course.classroom }}</span>{% endif %}
+        </a>
+      {% empty %}
+        <p class="empty">這天沒有課。</p>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div>

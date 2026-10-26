@@ -133,8 +133,31 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'  # 部署時 collectstatic 的輸出位�
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+# .env 有填 Gmail 帳號時用 SMTP 寄信；沒填時信件只印在終端機（本機開發用）
+EMAIL_ACCOUNT = os.environ.get('EMAIL_HOST_USER', '')
+
+if EMAIL_ACCOUNT:
+    MAILERS = {
+        'default': {
+            'BACKEND': 'django.core.mail.backends.smtp.EmailBackend',
+            'OPTIONS': {
+                'host': 'smtp.gmail.com',
+                'port': 587,
+                'username': EMAIL_ACCOUNT,
+                'password': os.environ.get('EMAIL_HOST_PASSWORD', ''),
+                'use_tls': True,
+                'timeout': 10,
+            },
+        },
+    }
+else:
+    MAILERS = {
+        'default': {
+            'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+        },
+    }
+
+DEFAULT_FROM_EMAIL = f'線上個人課表 <{EMAIL_ACCOUNT or "noreply@localhost"}>'
+
+# 重設密碼連結的有效時間（秒）
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 24

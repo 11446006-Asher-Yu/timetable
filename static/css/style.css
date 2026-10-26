@@ -605,6 +605,58 @@ a {
   display: none;
 }
 
+/* ===== 分享 ===== */
+.readonly-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--color-bg);
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+  vertical-align: middle;
+}
+
+.share-cta {
+  margin-top: 16px;
+  text-align: center;
+  color: var(--color-muted);
+}
+
+.share-status {
+  margin: 16px 0;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.share-status-on {
+  background: var(--color-success-bg);
+}
+
+.share-url {
+  display: flex;
+  gap: 8px;
+}
+
+.share-url input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  font: inherit;
+}
+
+.share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
 /* ===== 課程詳細資料視窗 ===== */
 .course-dialog {
   width: min(420px, calc(100% - 32px));

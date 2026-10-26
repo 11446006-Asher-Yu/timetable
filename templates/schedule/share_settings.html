@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}分享課表｜線上個人課表{% endblock %}
+
+{% block content %}
+<section class="card form-card">
+  <h1>分享課表</h1>
+  <p class="muted">開啟分享後，任何拿到連結的人不必登入就能看你的課表，包含老師、教室和備註，但不能修改。</p>
+
+  {% if link.is_active %}
+    <div class="share-status share-status-on">目前狀態：<strong>分享中</strong></div>
+    <div class="share-url">
+      <input type="text" id="share-url" value="{{ share_url }}" readonly aria-label="分享連結">
+      <button type="button" class="button" id="copy-button">複製連結</button>
+    </div>
+    <p><a href="{{ share_url }}" target="_blank" rel="noopener">在新分頁預覽分享頁</a></p>
+
+    <div class="share-actions">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="regenerate">
+        <button type="submit" class="button button-outline">重新產生連結</button>
+      </form>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="disable">
+        <button type="submit" class="button button-danger">停止分享</button>
+      </form>
+    </div>
+    <p class="help-text">重新產生後舊連結會立刻失效，適合連結被轉傳給不想讓他看的人時使用。</p>
+  {% else %}
+    <div class="share-status">目前狀態：<strong>未分享</strong></div>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="enable">
+      <button type="submit" class="button">開啟分享</button>
+    </form>
+  {% endif %}
+
+  <p class="auth-switch"><a href="{% url 'timetable' %}">回到我的課表</a></p>
+</section>
+<script src="{% static 'js/share.js' %}" defer></script>
+{% endblock %}

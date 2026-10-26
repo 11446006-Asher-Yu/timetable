@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from .forms import CourseForm, CourseTimeFormSet, SignUpForm
-from .models import Course, CourseTime, Period
+from .models import Course, CourseTime, Period, ShareLink
 
 
 def home(request):
@@ -107,14 +107,12 @@ def course_details(courses, can_edit):
     return details
 
 
-@login_required
-def timetable(request):
-    courses = list(
-        request.user.courses.prefetch_related('times__start_period', 'times__end_period')
-    )
+def timetable_context(owner, can_edit):
+    """「我的課表」與分享頁共用的資料。"""
+    courses = list(owner.courses.prefetch_related('times__start_period', 'times__end_period'))
     subtotals = {
         row['category']: row['credits']
-        for row in request.user.courses.values('category').annotate(credits=Sum('credits'))
+        for row in owner.courses.values('category').annotate(credits=Sum('credits'))
     }
     categories = [
         {
@@ -124,13 +122,46 @@ def timetable(request):
         }
         for category in Course.Category
     ]
-    return render(request, 'schedule/timetable.html', {
+    return {
+        'owner': owner,
         'courses': courses,
         'grid': build_grid(courses),
-        'details': course_details(courses, can_edit=True),
+        'details': course_details(courses, can_edit=can_edit),
         'categories': categories,
         'total_credits': sum(subtotals.values()),
-    })
+    }
+
+
+@login_required
+def timetable(request):
+    return render(request, 'schedule/timetable.html', timetable_context(request.user, can_edit=True))
+
+
+@login_required
+def share_settings(request):
+    link, _ = ShareLink.objects.get_or_create(user=request.user)
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'enable':
+            link.is_active = True
+            link.save(update_fields=['is_active'])
+            messages.success(request, '已開啟分享，把連結傳給想分享的人吧。')
+        elif action == 'disable':
+            link.is_active = False
+            link.save(update_fields=['is_active'])
+            messages.success(request, '已停止分享，原本的連結已無法開啟。')
+        elif action == 'regenerate':
+            link.regenerate()
+            messages.success(request, '已產生新連結，舊連結已失效。')
+        return redirect('share_settings')
+    share_url = request.build_absolute_uri(reverse('shared_timetable', args=[link.token]))
+    return render(request, 'schedule/share_settings.html', {'link': link, 'share_url': share_url})
+
+
+def shared_timetable(request, token):
+    # 停止分享或換過連結時一律 404，不透露這個連結是否存在過
+    link = get_object_or_404(ShareLink.objects.select_related('user'), token=token, is_active=True)
+    return render(request, 'schedule/shared_timetable.html', timetable_context(link.user, can_edit=False))
 
 
 def _edit_course(request, course):
