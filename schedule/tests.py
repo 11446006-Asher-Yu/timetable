@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db.models import Sum
 from django.test import TestCase
+from django.urls import reverse
 
 from .models import Course, CourseTime, Period, ShareLink
 
@@ -47,3 +48,49 @@ class ModelTests(TestCase):
         link.regenerate()
         link.refresh_from_db()
         self.assertNotEqual(link.token, old)
+
+
+class AuthTests(TestCase):
+    password = 'Sch3dule-pass!'
+
+    def signup(self, username='newbie', email='newbie@example.com'):
+        return self.client.post(reverse('signup'), {
+            'username': username,
+            'email': email,
+            'password1': self.password,
+            'password2': self.password,
+        })
+
+    def test_signup_creates_user_and_logs_in(self):
+        response = self.signup()
+        self.assertRedirects(response, reverse('timetable'))
+        user = get_user_model().objects.get(username='newbie')
+        self.assertEqual(user.email, 'newbie@example.com')
+        self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
+
+    def test_signup_rejects_duplicate_email(self):
+        self.signup()
+        self.client.logout()
+        response = self.signup(username='other', email='NEWBIE@example.com')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '這個 Email 已經註冊過了。')
+        self.assertFalse(get_user_model().objects.filter(username='other').exists())
+
+    def test_timetable_requires_login(self):
+        response = self.client.get(reverse('timetable'))
+        self.assertRedirects(response, f"{reverse('login')}?next={reverse('timetable')}")
+
+    def test_login_and_logout(self):
+        get_user_model().objects.create_user('student', password=self.password)
+        response = self.client.post(
+            reverse('login'), {'username': 'student', 'password': self.password}
+        )
+        self.assertRedirects(response, reverse('timetable'))
+        response = self.client.post(reverse('logout'))
+        self.assertRedirects(response, reverse('home'))
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_home_redirects_logged_in_user(self):
+        user = get_user_model().objects.create_user('student', password=self.password)
+        self.client.force_login(user)
+        self.assertRedirects(self.client.get(reverse('home')), reverse('timetable'))

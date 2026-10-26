@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}登入｜線上個人課表{% endblock %}
+
+{% block content %}
+<section class="card auth-card">
+  <h1>登入</h1>
+  <form method="post">
+    {% csrf_token %}
+    {% include '_form_fields.html' %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" class="button button-block">登入</button>
+  </form>
+  <p class="auth-switch">還沒有帳號？<a href="{% url 'signup' %}">註冊</a></p>
+</section>
+{% endblock %}

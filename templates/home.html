@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="hero">
+  <h1>你的課表，隨時帶著走</h1>
+  <p>新增課程、依類別上色、自動計算學分，手機上也能查「現在該去哪上課」。</p>
+  <div class="hero-actions">
+    <a href="{% url 'signup' %}" class="button">免費註冊</a>
+    <a href="{% url 'login' %}" class="button button-outline">登入</a>
+  </div>
+</section>
+{% endblock %}
