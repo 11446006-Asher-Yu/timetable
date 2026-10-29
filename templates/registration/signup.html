@@ -9,6 +9,7 @@
   <form method="post">
     {% csrf_token %}
     {% include '_form_fields.html' %}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
     <button type="submit" class="button button-block">{% translate "Create account" %}</button>
   </form>
   <p class="auth-switch">{% translate "Already have an account?" %} <a href="{% url 'login' %}">{% translate "Log in" %}</a></p>

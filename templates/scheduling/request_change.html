@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Request a change" %} | {% translate "Online Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card form-card">
+  <h1>{% blocktranslate with name=offering.name %}Request a change: {{ name }}{% endblocktranslate %}</h1>
+  <p class="muted">{% translate "Current:" %} {{ offering.time_list|join:", " }} · {{ offering.classroom.name|default:"—" }}</p>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include '_form_fields.html' %}
+
+    <p><strong>{% translate "Preferred times (optional)" %}</strong></p>
+    <div class="timetable-scroll">
+      <table class="cell-grid">
+        <thead><tr><th>{% translate "Period" %}</th>{% for day in grid.days %}<th>{{ day.label }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for row in grid.rows %}
+            <tr>
+              <th><span class="tt-period-number">{{ row.period.number }}</span> <span class="tt-period-time">{{ row.period.start_time|time:'H:i' }}</span></th>
+              {% for cell in row.cells %}
+                <td>
+                  <label class="pick-cell">
+                    <input type="checkbox" name="cell" value="{{ cell.key }}" {% if cell.selected %}checked{% endif %}
+                           aria-label="{{ cell.day_label }} {{ row.period.number }}">
+                    <span class="pick-mark" aria-hidden="true"></span>
+                  </label>
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-actions">
+      <a href="{% url 'scheduling:teaching' %}" class="button button-outline">{% translate "Cancel" %}</a>
+      <button type="submit" class="button">{% translate "Send request" %}</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

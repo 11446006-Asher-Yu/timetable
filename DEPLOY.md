@@ -127,6 +127,17 @@ application = get_wsgi_application()
 
 出現錯誤時，到 Web 頁面最下方的 **Log files** 看 **Error log**。
 
+## 5.1 指定排課人員（第二階段）
+
+排課人員由管理員在後台指定：
+
+1. 用管理員帳號登入 `https://<帳號>.pythonanywhere.com/admin/`。
+2. 進入 **Users**，點要指定的帳號。
+3. 在 **Groups** 欄位把 **Schedulers** 移到右邊（選取），按 **Save**。
+4. 該帳號重新整理網站後，頁首會出現「Scheduling／排課」。
+
+老師不用在後台設定：排課人員在「Teachers」頁寄邀請，老師點信中連結接受後就會自動加入 **Teachers** 群組。
+
 ## 6. 之後更新網站
 
 本機改完並推送到 GitHub 後，在 PythonAnywhere 的 Bash console 執行：

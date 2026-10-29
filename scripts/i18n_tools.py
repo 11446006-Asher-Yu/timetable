@@ -15,7 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 PO_FILE = BASE_DIR / 'locale' / 'zh_Hant' / 'LC_MESSAGES' / 'django.po'
 MO_FILE = PO_FILE.with_suffix('.mo')
 
-PY_FUNCS = {'_', 'gettext', 'gettext_lazy', 'pgettext', 'pgettext_lazy'}
+PY_FUNCS = {'_', 'gettext', 'gettext_lazy', 'pgettext', 'pgettext_lazy', 'ngettext', 'ngettext_lazy'}
 
 TRANSLATE_TAG = re.compile(
     r"""{%\s*translate\s+(?P<q>["'])(?P<msg>.*?)(?P=q)(?:\s+context\s+(?P<cq>["'])(?P<ctx>.*?)(?P=cq))?\s*%}"""
@@ -35,7 +35,8 @@ def extract():
     """回傳 {(context, msgid, plural): 出處}。"""
     found = {}
 
-    for path in sorted((BASE_DIR / 'schedule').rglob('*.py')):
+    py_files = [p for app in ('schedule', 'scheduling') for p in (BASE_DIR / app).rglob('*.py')]
+    for path in sorted(py_files):
         if 'migrations' in path.parts or path.name == 'tests.py':
             continue
         for node in ast.walk(ast.parse(path.read_text(encoding='utf-8'))):
@@ -44,6 +45,8 @@ def extract():
             args = [a.value for a in node.args if isinstance(a, ast.Constant) and isinstance(a.value, str)]
             if node.func.id.startswith('pgettext') and len(args) == 2:
                 found[(args[0], args[1], None)] = path.name
+            elif node.func.id.startswith('ngettext') and len(args) >= 2:
+                found[(None, args[0], args[1])] = path.name
             elif args:
                 found[(None, args[0], None)] = path.name
 

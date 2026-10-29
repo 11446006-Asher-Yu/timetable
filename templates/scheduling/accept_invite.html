@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Teacher invitation" %} | {% translate "Online Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card auth-card">
+  {% if invite.accepted_at %}
+    <h1>{% translate "Invitation already used" %}</h1>
+    <p>{% translate "This invitation has already been accepted." %}</p>
+    {% if user.is_authenticated %}<a href="{% url 'scheduling:teacher_home' %}" class="button button-block">{% translate "Go to teacher pages" %}</a>{% endif %}
+  {% elif not invite.is_usable %}
+    <h1>{% translate "Invitation expired" %}</h1>
+    <p>{% translate "Ask the scheduler to send you a new invitation." %}</p>
+  {% else %}
+    <h1>{% translate "You’re invited to teach" %}</h1>
+    <p>{% blocktranslate with name=invite.name inviter=invite.invited_by.get_full_name|default:invite.invited_by.username %}Hi {{ name }}, {{ inviter }} invited you to join Online Timetable as a teacher.{% endblocktranslate %}</p>
+    {% if user.is_authenticated %}
+      <form method="post">
+        {% csrf_token %}
+        <p class="muted">{% blocktranslate with username=user.username %}You’ll accept as {{ username }}.{% endblocktranslate %}</p>
+        <button type="submit" class="button button-block">{% translate "Accept invitation" %}</button>
+      </form>
+    {% else %}
+      <a href="{% url 'signup' %}?next={{ request.path|urlencode }}" class="button button-block">{% translate "Create an account" %}</a>
+      <p class="auth-switch">{% translate "Already have one?" %} <a href="{% url 'login' %}?next={{ request.path|urlencode }}">{% translate "Log in to accept" %}</a></p>
+    {% endif %}
+    <p class="muted">{% blocktranslate with date=invite.expires_at|date:'Y-m-d' %}This invitation expires on {{ date }}.{% endblocktranslate %}</p>
+  {% endif %}
+</section>
+{% endblock %}

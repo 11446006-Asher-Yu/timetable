@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {% translate "Online Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="page-heading"><h1>{{ title }}</h1></div>
+  {% include 'scheduling/_scheduler_nav.html' with active=kind %}
+
+  <div class="split">
+    <div>
+      {% if items %}
+        <ul class="row-list">
+          {% for item in items %}
+            <li>
+              <div>
+                <strong>{{ item.object }}</strong>
+                {% if item.detail %}<div class="muted">{{ item.detail }}</div>{% endif %}
+              </div>
+              <div class="row-actions">
+                {% if kind == 'terms' %}
+                  <form method="post" action="{% url 'scheduling:term_availability' item.object.pk %}" class="inline-form">
+                    {% csrf_token %}
+                    {% if item.object.availability_open %}
+                      <input type="hidden" name="open" value="0">
+                      <button type="submit" class="link-button">{% translate "Close availability form" %}</button>
+                    {% else %}
+                      <input type="hidden" name="open" value="1">
+                      <button type="submit" class="link-button">{% translate "Open availability form" %}</button>
+                    {% endif %}
+                  </form>
+                {% endif %}
+                <a href="{% url 'scheduling:manage_edit' kind item.object.pk %}">{% translate "Edit" %}</a>
+                <form method="post" action="{% url 'scheduling:manage_delete' kind item.object.pk %}" class="inline-form">
+                  {% csrf_token %}
+                  <button type="submit" class="link-button danger-link">{% translate "Delete" %}</button>
+                </form>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">{% translate "Nothing here yet." %}</p>
+      {% endif %}
+    </div>
+
+    <form method="post" class="panel">
+      <h2>{% if editing %}{% blocktranslate with name=editing %}Edit “{{ name }}”{% endblocktranslate %}{% else %}{% translate "Add new" %}{% endif %}</h2>
+      {% csrf_token %}
+      {% include '_form_fields.html' %}
+      <div class="form-actions">
+        {% if editing %}<a href="{% url 'scheduling:manage' kind %}" class="button button-outline">{% translate "Cancel" %}</a>{% endif %}
+        <button type="submit" class="button">{% translate "Save" %}</button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% translate "My availability" %} | {% translate "Online Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="page-heading">
+    <div>
+      <h1>{% translate "My availability" %}{% if term %} · {{ term.name }}{% endif %}</h1>
+      {% if term %}
+        <p class="muted">
+          {% if record.submitted_at %}{% blocktranslate with date=record.submitted_at|date:'Y-m-d H:i' %}Submitted {{ date }}{% endblocktranslate %}{% else %}{% translate "Not submitted" %}{% endif %}
+          {% if term.availability_deadline %}· {% blocktranslate with date=term.availability_deadline|date:'Y-m-d' %}Deadline {{ date }}{% endblocktranslate %}{% endif %}
+        </p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if not term %}
+    <p class="empty">{% translate "The scheduler hasn’t created a term yet." %}</p>
+  {% else %}
+    {% if not editable %}
+      <p class="conflict-notice">{% translate "The availability form is closed. Contact the scheduler if you need to change it." %}</p>
+    {% else %}
+      <p class="muted">{% translate "Tap a cell to switch: ✓ Available → ~ Prefer not → ✗ Unavailable." %}</p>
+    {% endif %}
+
+    <form method="post" id="availability-form" class="{% if editable %}is-editable{% endif %}">
+      {% csrf_token %}
+      <div class="timetable-scroll">
+        <table class="cell-grid">
+          <thead><tr><th>{% translate "Period" %}</th>{% for day in grid.days %}<th>{{ day.label }}</th>{% endfor %}</tr></thead>
+          <tbody>
+            {% for row in grid.rows %}
+              <tr>
+                <th><span class="tt-period-number">{{ row.period.number }}</span> <span class="tt-period-time">{{ row.period.start_time|time:'H:i' }}</span></th>
+                {% for cell in row.cells %}
+                  <td>
+                    {# 沒有 JavaScript 時直接用下拉選單；有 JavaScript 時換成點一下切換的按鈕 #}
+                    <select name="a-{{ cell.key }}" class="avail-select avail-{{ cell.status }}" aria-label="{{ cell.day_label }} {{ row.period.number }}" {% if not editable %}disabled{% endif %}>
+                      {% for value, label in choices %}<option value="{{ value }}" {% if value == cell.status %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select>
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="form-field">
+        <label for="note">{% translate "Note" %}</label>
+        <textarea name="note" id="note" rows="2" {% if not editable %}disabled{% endif %}>{{ record.note }}</textarea>
+      </div>
+
+      {% if editable %}
+        <div class="form-actions">
+          <button type="button" class="button button-outline" id="all-available">{% translate "Set all available" %}</button>
+          <button type="submit" name="action" value="save" class="button button-outline">{% translate "Save" %}</button>
+          <button type="submit" name="action" value="submit" class="button">{% translate "Submit" %}</button>
+        </div>
+      {% endif %}
+    </form>
+  {% endif %}
+</section>
+<script src="{% static 'js/availability.js' %}" defer></script>
+{% endblock %}

@@ -14,16 +14,19 @@
     update();
   }
 
-  rows.querySelectorAll('.time-row').forEach(bindDelete);
+  // 正式課程的修改頁沒有時段欄位，跳過這段
+  if (rows) {
+    rows.querySelectorAll('.time-row').forEach(bindDelete);
 
-  // Django formset 的空白表單以 __prefix__ 標記索引，複製時換成下一個編號
-  addButton.addEventListener('click', function () {
-    const index = Number(totalForms.value);
-    const html = template.innerHTML.replace(/__prefix__/g, index);
-    rows.insertAdjacentHTML('beforeend', html);
-    totalForms.value = index + 1;
-    bindDelete(rows.lastElementChild);
-  });
+    // Django formset 的空白表單以 __prefix__ 標記索引，複製時換成下一個編號
+    addButton.addEventListener('click', function () {
+      const index = Number(totalForms.value);
+      const html = template.innerHTML.replace(/__prefix__/g, index);
+      rows.insertAdjacentHTML('beforeend', html);
+      totalForms.value = index + 1;
+      bindDelete(rows.lastElementChild);
+    });
+  }
 
   // 色碼文字欄旁加上原生顏色選擇器，兩邊同步；文字欄留白代表使用類別預設色
   const colorInput = document.querySelector('input[name="color"]');

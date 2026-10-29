@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% translate "Schedule" %} {{ offering.name }} | {% translate "Online Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="page-heading">
+    <div>
+      <h1>{% blocktranslate with name=offering.name %}Schedule: {{ name }}{% endblocktranslate %}</h1>
+      <p class="muted">
+        {{ offering.class_group }} · {{ offering.teacher.get_full_name|default:offering.teacher.username }} ·
+        {% blocktranslate count counter=offering.periods_per_week %}{{ counter }} period per week{% plural %}{{ counter }} periods per week{% endblocktranslate %}
+        · {{ offering.get_room_kind_display }} · {% include 'scheduling/_status.html' %}
+      </p>
+    </div>
+  </div>
+
+  {% if open_request %}
+    <div class="conflict-notice">
+      <strong>{% translate "Teacher’s change request:" %}</strong> {{ open_request.reason }}
+      <a href="{% url 'scheduling:requests' %}">{% translate "Review" %}</a>
+    </div>
+  {% endif %}
+
+  <form method="post" id="board-form" class="board" data-check-url="{{ request.path }}">
+    {% csrf_token %}
+    <div class="board-grid-wrap">
+      <p class="muted">{% translate "Tick the periods for this course. Colors show the teacher’s availability." %}</p>
+      <div class="timetable-scroll">
+        <table class="cell-grid">
+          <thead>
+            <tr><th>{% translate "Period" %}</th>{% for day in grid.days %}<th>{{ day.label }}</th>{% endfor %}</tr>
+          </thead>
+          <tbody>
+            {% for row in grid.rows %}
+              <tr>
+                <th><span class="tt-period-number">{{ row.period.number }}</span> <span class="tt-period-time">{{ row.period.start_time|time:'H:i' }}</span></th>
+                {% for cell in row.cells %}
+                  <td>
+                    <label class="pick-cell avail-{{ cell.status }}{% if cell.busy %} is-busy{% endif %}"
+                           {% if cell.busy %}title="{% translate 'Taken:' %} {{ cell.busy|join:'; ' }}"{% endif %}>
+                      <input type="checkbox" name="cell" value="{{ cell.key }}" {% if cell.selected %}checked{% endif %}
+                             aria-label="{{ cell.day_label }} {{ row.period.number }}">
+                      <span class="pick-mark" aria-hidden="true"></span>
+                    </label>
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <ul class="legend">
+        <li><span class="legend-swatch avail-available"></span>{% translate "Available" %}</li>
+        <li><span class="legend-swatch avail-avoid"></span>{% translate "Prefer not" %}</li>
+        <li><span class="legend-swatch avail-unavailable"></span>{% translate "Unavailable" %}</li>
+        <li><span class="legend-swatch is-busy-swatch"></span>{% translate "Teacher or class group busy" %}</li>
+      </ul>
+    </div>
+
+    <aside class="board-side panel">
+      <div class="form-field">
+        <label for="classroom">{% translate "Classroom" %}</label>
+        <select name="classroom" id="classroom">
+          <option value="">{% translate "Select" %}</option>
+          {% for room in rooms %}<option value="{{ room.pk }}" {% if room == classroom %}selected{% endif %}>{{ room }}</option>{% endfor %}
+        </select>
+        <p class="help-text">{% translate "Only free classrooms of the right type and size are listed." %}</p>
+      </div>
+
+      <div id="check-result" aria-live="polite">
+        {% for message in payload.errors %}<p class="check check-error">✗ {{ message }}</p>{% endfor %}
+        {% for message in payload.warnings %}<p class="check check-warning">~ {{ message }}</p>{% endfor %}
+        {% if payload.ok %}<p class="check check-ok">✓ {% translate "All checks passed." %}</p>{% endif %}
+      </div>
+
+      <div class="form-actions">
+        <a href="{% url 'scheduling:offerings' %}" class="button button-outline">{% translate "Cancel" %}</a>
+        <button type="submit" name="action" value="save" class="button button-outline">{% translate "Save draft" %}</button>
+        <button type="submit" name="action" value="send" class="button" id="send-button">{% translate "Send to teacher" %}</button>
+      </div>
+    </aside>
+  </form>
+</section>
+<script type="application/json" id="board-text">{"ok": "{% translate 'All checks passed.' %}", "select": "{% translate 'Select' %}"}</script>
+<script src="{% static 'js/board.js' %}" defer></script>
+{% endblock %}

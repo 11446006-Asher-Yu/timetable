@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% if offering %}{% translate "Edit offering" %}{% else %}{% translate "New offering" %}{% endif %} | {% translate "Online Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card form-card">
+  <h1>{% if offering %}{% translate "Edit offering" %}{% else %}{% translate "New offering" %}{% endif %}</h1>
+  {% if not form.fields.teacher.queryset.exists %}
+    <p class="conflict-notice">{% translate "No teachers yet. Invite teachers first so you can assign them." %}
+      <a href="{% url 'scheduling:teachers' %}">{% translate "Teachers" %}</a></p>
+  {% endif %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include '_form_fields.html' %}
+    <div class="form-actions">
+      <a href="{% url 'scheduling:offerings' %}" class="button button-outline">{% translate "Cancel" %}</a>
+      <button type="submit" class="button">{% if offering %}{% translate "Save" %}{% else %}{% translate "Save and schedule" %}{% endif %}</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

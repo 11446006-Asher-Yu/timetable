@@ -31,6 +31,13 @@ class CourseForm(forms.ModelForm):
         }
 
 
+class OfficialCourseForm(forms.ModelForm):
+    class Meta:
+        model = Course
+        fields = ['color', 'note']
+        widgets = CourseForm.Meta.widgets
+
+
 class PeriodChoiceField(forms.ModelChoiceField):
     # 下拉選單空間有限，只顯示「第 1 節 08:10」／“Period 1 08:10”
     def label_from_instance(self, obj):

@@ -930,6 +930,438 @@ a {
   color: var(--color-muted);
 }
 
+/* ===== 第二階段：排課人員、老師、課程目錄 ===== */
+:root {
+  --avail-available: #DAFBE1;
+  --avail-avoid: #FFF4CE;
+  --avail-unavailable: #FFE1E1;
+}
+
+.sub-nav {
+  display: flex;
+  gap: 4px;
+  margin: 16px 0 20px;
+  padding-bottom: 8px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sub-nav a {
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--color-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color var(--duration) var(--ease-out), color var(--duration) var(--ease-out);
+}
+
+.sub-nav a:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.sub-nav a.is-active {
+  background: var(--color-primary);
+  color: #FFFFFF;
+}
+
+.term-picker select,
+.filter-bar input,
+.filter-bar select {
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: #FFFFFF;
+  font: inherit;
+}
+
+.term-picker label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-muted);
+}
+
+.section-title {
+  margin: 24px 0 8px;
+  font-size: 1.05rem;
+}
+
+.panel {
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: #FFFFFF;
+}
+
+.panel h2 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+  gap: 24px;
+  align-items: start;
+}
+
+/* 狀態標籤：草稿灰、待確認藍、申請調整橘、已確認綠、已公布紫 */
+.status {
+  display: inline-block;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.status-draft { background: #EAEEF2; color: #57606A; }
+.status-pending { background: #DDF4FF; color: #0969DA; }
+.status-change_requested { background: #FFF1E5; color: #BC4C00; }
+.status-accepted { background: #DAFBE1; color: #1A7F37; }
+.status-published { background: #FBEFFF; color: #8250DF; }
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border-radius: var(--radius);
+}
+
+.stat strong {
+  font-size: 1.6rem;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+}
+
+.progress {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-bg);
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-primary);
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+.todo-list,
+.row-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.todo-list li {
+  padding: 6px 0;
+}
+
+.row-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table th {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* 星期 × 節次的勾選格子（排課看板、可授課時段、申請調整共用） */
+.cell-grid {
+  border-collapse: separate;
+  border-spacing: 3px;
+  margin: 8px 0;
+}
+
+.cell-grid th {
+  padding: 2px 6px;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cell-grid td {
+  padding: 0;
+}
+
+.pick-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 34px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration) var(--ease-out);
+}
+
+.pick-cell:active {
+  transform: scale(0.94);
+}
+
+.pick-cell input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pick-cell:has(input:focus-visible) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.pick-cell:has(input:checked) {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  box-shadow: 0 2px 6px rgba(59, 111, 182, 0.35);
+}
+
+.pick-cell:has(input:checked) .pick-mark::after {
+  content: '✓';
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.pick-cell.avail-available { background: var(--avail-available); }
+.pick-cell.avail-avoid { background: var(--avail-avoid); }
+.pick-cell.avail-unavailable { background: var(--avail-unavailable); }
+
+/* 老師或班級在這個時段已有課：斜線底紋 */
+.pick-cell.is-busy {
+  background-image: repeating-linear-gradient(135deg, transparent 0 6px, rgba(0, 0, 0, 0.12) 6px 8px);
+}
+
+.legend-swatch.avail-available { background: var(--avail-available); border: 1px solid var(--color-border); }
+.legend-swatch.avail-avoid { background: var(--avail-avoid); border: 1px solid var(--color-border); }
+.legend-swatch.avail-unavailable { background: var(--avail-unavailable); border: 1px solid var(--color-border); }
+.legend-swatch.is-busy-swatch {
+  border: 1px solid var(--color-border);
+  background: repeating-linear-gradient(135deg, #FFFFFF 0 3px, rgba(0, 0, 0, 0.2) 3px 4px);
+}
+
+.board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 24px;
+  align-items: start;
+}
+
+.board-side {
+  position: sticky;
+  top: 74px;
+}
+
+.check {
+  margin: 6px 0;
+  font-size: 0.9rem;
+}
+
+.check-error { color: var(--color-error); }
+.check-warning { color: #9A6700; }
+.check-ok { color: #1A7F37; font-weight: 600; }
+
+.button.is-blocked {
+  opacity: 0.55;
+}
+
+.request-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.request-card .dialog-body {
+  padding: 12px 0;
+}
+
+.request-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.decline-form {
+  flex: 1;
+  min-width: 240px;
+}
+
+.tile-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  text-decoration: none;
+  transition: transform var(--duration) var(--ease-spring), box-shadow var(--duration) var(--ease-out);
+}
+
+.tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.tile-label {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.tile strong {
+  font-size: 1.3rem;
+}
+
+/* 可授課時段：點一下切換的按鈕（沒有 JavaScript 時顯示下拉選單） */
+.avail-select {
+  width: 100%;
+  min-width: 56px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.avail-toggle {
+  width: 56px;
+  height: 34px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+
+.avail-toggle:active {
+  transform: scale(0.92);
+}
+
+.avail-select.avail-available,
+.avail-toggle.avail-available { background: var(--avail-available); color: #1A7F37; }
+.avail-select.avail-avoid,
+.avail-toggle.avail-avoid { background: var(--avail-avoid); color: #9A6700; }
+.avail-select.avail-unavailable,
+.avail-toggle.avail-unavailable { background: var(--avail-unavailable); color: var(--color-error); }
+
+.teaching-grid td {
+  min-width: 90px;
+  height: 34px;
+  border-radius: 6px;
+  background: var(--color-bg);
+  vertical-align: top;
+}
+
+.teach-chip {
+  display: flex;
+  flex-direction: column;
+  padding: 3px 6px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.teach-chip small {
+  opacity: 0.8;
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.filter-bar input[type="search"] {
+  flex: 1;
+  min-width: 180px;
+}
+
+.official-tag {
+  display: inline-block;
+  padding: 0 8px;
+  border: 1px solid #8250DF;
+  border-radius: 999px;
+  color: #8250DF;
+  font-size: 0.75rem;
+  vertical-align: middle;
+}
+
+.official-info {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: #FBEFFF;
+}
+
+.official-info p {
+  margin: 0 0 4px;
+}
+
+.added-mark {
+  color: #1A7F37;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* ===== 動畫與互動 ===== */
 @keyframes page-in {
   from { opacity: 0; transform: translateY(8px); }
@@ -1077,6 +1509,31 @@ a {
     display: none;
   }
 
+  /* 角色多時選單連結變多：選單可橫向滑動，不撐開整頁 */
+  .brand {
+    flex-shrink: 0;
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+
+  .site-nav {
+    flex: 1;
+    justify-content: flex-start;
+    gap: 12px;
+    min-width: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+
+  .site-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .lang-button {
+    white-space: nowrap;
+  }
+
   .hero {
     padding: 32px 0;
   }
@@ -1111,9 +1568,36 @@ a {
     align-items: flex-start;
   }
 
-  /* 課表改用星期分頁 */
+  /* 課表改用星期分頁（排課用的勾選格子例外，五天剛好放得下） */
   .timetable-scroll {
     display: none;
+  }
+
+  .card .timetable-scroll:has(.cell-grid) {
+    display: block;
+  }
+
+  .split,
+  .board {
+    grid-template-columns: 1fr;
+  }
+
+  .board-side {
+    position: static;
+  }
+
+  .pick-cell,
+  .avail-toggle {
+    width: 44px;
+  }
+
+  .cell-grid .tt-period-time {
+    display: none;
+  }
+
+  .row-list li {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .mobile-days {

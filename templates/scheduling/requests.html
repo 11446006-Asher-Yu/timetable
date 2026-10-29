@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Change requests" %} | {% translate "Online Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="page-heading"><h1>{% translate "Change requests" %}</h1></div>
+  {% include 'scheduling/_scheduler_nav.html' with active='requests' %}
+
+  {% for item in items %}
+    {% with change=item.change offering=item.change.offering %}
+      <article class="panel request-card">
+        <header class="request-head">
+          <strong>{{ offering.name }} · {{ offering.teacher.get_full_name|default:offering.teacher.username }}</strong>
+          <span class="muted">{{ change.created_at|date:'Y-m-d H:i' }}</span>
+        </header>
+        <dl class="dialog-body">
+          <dt>{% translate "Current" %}</dt><dd>{{ offering.time_list|join:", " }} · {{ offering.classroom.name|default:"—" }}</dd>
+          <dt>{% translate "Wants" %}</dt><dd>{{ item.preferred|default:"—" }}</dd>
+          <dt>{% translate "Reason" %}</dt><dd>{{ change.reason }}</dd>
+        </dl>
+        <div class="request-actions">
+          <form method="post" action="{% url 'scheduling:request_resolve' change.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="decision" value="approve">
+            <button type="submit" class="button">{% translate "Approve & reschedule" %}</button>
+          </form>
+          <form method="post" action="{% url 'scheduling:request_resolve' change.pk %}" class="decline-form">
+            {% csrf_token %}
+            <input type="hidden" name="decision" value="decline">
+            {% with form=item.form %}{% include '_form_fields.html' %}{% endwith %}
+            <button type="submit" class="button button-danger">{% translate "Decline with note" %}</button>
+          </form>
+        </div>
+      </article>
+    {% endwith %}
+  {% empty %}
+    <p class="empty">{% translate "No change requests waiting." %}</p>
+  {% endfor %}
+
+  {% if resolved %}
+    <h2 class="section-title">{% translate "Recently resolved" %}</h2>
+    <ul class="row-list">
+      {% for change in resolved %}
+        <li><div><strong>{{ change.offering.name }}</strong> · {{ change.get_status_display }}<div class="muted">{{ change.response }}</div></div></li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</section>
+{% endblock %}

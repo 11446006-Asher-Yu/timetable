@@ -1,0 +1,12 @@
+{% load i18n %}
+{# 學期切換：選了就送出（沒有 JavaScript 時按「Go」） #}
+{% if terms %}
+  <form method="get" class="term-picker">
+    <label>{% translate "Term" %}
+      <select name="term" onchange="this.form.submit()">
+        {% for t in terms %}<option value="{{ t.pk }}" {% if t == term %}selected{% endif %}>{{ t.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <noscript><button type="submit" class="button button-small-outline button-outline">{% translate "Go" %}</button></noscript>
+  </form>
+{% endif %}

@@ -24,6 +24,9 @@
       </form>
       {% if user.is_authenticated %}
         <span class="nav-user">{{ user.username }}</span>
+        <a href="{% url 'scheduling:catalog' %}">{% translate "Catalog" %}</a>
+        {% if is_teacher %}<a href="{% url 'scheduling:teacher_home' %}">{% translate "Teaching" %}</a>{% endif %}
+        {% if is_scheduler %}<a href="{% url 'scheduling:dashboard' %}">{% translate "Scheduling" %}</a>{% endif %}
         <a href="{% url 'timetable' %}">{% translate "My timetable" %}</a>
         {# Django 5 起登出必須用 POST #}
         <form method="post" action="{% url 'logout' %}" class="inline-form">

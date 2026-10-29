@@ -31,6 +31,7 @@
         <div class="course-info">
           <strong>{{ course.name }}</strong>
           <span class="tag" style="background: {{ course.display_color }}">{{ course.get_category_display }}</span>
+          {% if course.offering_id %}<span class="official-tag">{% translate "Official course" %}</span>{% endif %}
           <span class="muted">{% blocktranslate count credits=course.credits %}{{ credits }} credit{% plural %}{{ credits }} credits{% endblocktranslate %}</span>
           <div class="muted">
             {% for time in course.times.all %}{{ time }}{% if not forloop.last %}{% translate ", " context "list separator" %}{% endif %}{% endfor %}

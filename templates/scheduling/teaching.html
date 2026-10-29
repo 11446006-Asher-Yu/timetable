@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "My classes" %} | {% translate "Online Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="page-heading">
+    <h1>{% translate "My classes" %}{% if term %} · {{ term.name }}{% endif %}</h1>
+    {% if pending_count %}
+      <form method="post" class="inline-form">
+        {% csrf_token %}
+        <input type="hidden" name="offering" value="all">
+        <button type="submit" class="button">{% translate "Accept all pending" %}</button>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if offerings %}
+    <ul class="row-list">
+      {% for offering in offerings %}
+        <li>
+          <div>
+            <strong>{{ offering.name }}</strong> · {{ offering.class_group }} {% include 'scheduling/_status.html' %}
+            <div class="muted">{{ offering.time_list|join:", "|default:"—" }} · {{ offering.classroom.name|default:"—" }}</div>
+          </div>
+          <div class="row-actions">
+            {% if offering.status == 'pending' %}
+              <form method="post" class="inline-form">
+                {% csrf_token %}
+                <input type="hidden" name="offering" value="{{ offering.pk }}">
+                <button type="submit" class="button button-small">{% translate "Accept" %}</button>
+              </form>
+            {% endif %}
+            {% if offering.status == 'pending' or offering.status == 'accepted' %}
+              <a href="{% url 'scheduling:request_change' offering.pk %}">{% translate "Request change" %}</a>
+            {% elif offering.status == 'change_requested' %}
+              <span class="muted">{% translate "Waiting for the scheduler" %}</span>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+
+    <div class="timetable-scroll">
+      <table class="cell-grid teaching-grid">
+        <thead><tr><th>{% translate "Period" %}</th>{% for day in grid.days %}<th>{{ day.label }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for row in grid.rows %}
+            <tr>
+              <th><span class="tt-period-number">{{ row.period.number }}</span> <span class="tt-period-time">{{ row.period.start_time|time:'H:i' }}</span></th>
+              {% for cell in row.cells %}
+                <td>{% for offering in cell.offerings %}<span class="teach-chip status-{{ offering.status }}">{{ offering.name }}<small>{{ offering.classroom.name }}</small></span>{% endfor %}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">{% translate "No classes have been sent to you yet." %}</p>
+  {% endif %}
+</section>
+{% endblock %}

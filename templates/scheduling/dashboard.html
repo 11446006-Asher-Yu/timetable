@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Scheduling" %} | {% translate "Online Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="page-heading">
+    <h1>{% translate "Scheduling" %}{% if term %} · {{ term.name }}{% endif %}</h1>
+    <div class="toolbar">
+      {% include 'scheduling/_term_picker.html' %}
+      <a href="{% url 'scheduling:offering_new' %}" class="button">{% translate "+ New offering" %}</a>
+    </div>
+  </div>
+  {% include 'scheduling/_scheduler_nav.html' with active='dashboard' %}
+
+  {% if not term %}
+    <p class="empty">{% translate "Create a term first to start scheduling." %} <a href="{% url 'scheduling:manage' 'terms' %}">{% translate "Terms" %}</a></p>
+  {% else %}
+    <ul class="stat-row">
+      {% for value, label, count in status_counts %}
+        <li class="stat status-{{ value }}"><span class="stat-label">{{ label }}</span><strong>{{ count }}</strong></li>
+      {% endfor %}
+    </ul>
+
+    <div class="panel">
+      <h2>{% translate "Teacher availability" %}</h2>
+      <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="{{ teacher_total }}" aria-valuenow="{{ teacher_submitted }}">
+        <span style="width: {% widthratio teacher_submitted teacher_total|default:1 100 %}%"></span>
+      </div>
+      <p class="muted">
+        {% blocktranslate with done=teacher_submitted total=teacher_total %}{{ done }} of {{ total }} teachers submitted{% endblocktranslate %}
+        · {% if term.availability_open %}{% translate "Form open" %}{% else %}{% translate "Form closed" %}{% endif %}
+        {% if term.availability_deadline %}· {% blocktranslate with date=term.availability_deadline|date:'Y-m-d' %}Deadline {{ date }}{% endblocktranslate %}{% endif %}
+      </p>
+    </div>
+
+    <div class="panel">
+      <h2>{% translate "Needs attention" %}</h2>
+      <ul class="todo-list">
+        {% if open_requests %}
+          <li>{% blocktranslate count counter=open_requests %}{{ counter }} change request waiting{% plural %}{{ counter }} change requests waiting{% endblocktranslate %}
+            <a href="{% url 'scheduling:requests' %}">{% translate "Review" %}</a></li>
+        {% endif %}
+        {% for offering in unscheduled %}
+          <li>{% blocktranslate with name=offering.name %}“{{ name }}” has no time slot yet{% endblocktranslate %}
+            <a href="{% url 'scheduling:board' offering.pk %}">{% translate "Schedule" %}</a></li>
+        {% endfor %}
+        {% if not open_requests and not unscheduled %}<li class="muted">{% translate "Nothing to do right now." %}</li>{% endif %}
+      </ul>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

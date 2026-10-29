@@ -541,3 +541,671 @@ msgstr "分享連結"
 
 msgid "share links"
 msgstr "分享連結"
+
+# ===== 第二階段：排課協調 =====
+msgid "Course scheduling"
+msgstr "排課協調"
+
+msgid "Catalog"
+msgstr "課程目錄"
+
+msgid "Teaching"
+msgstr "授課"
+
+msgid "Scheduling"
+msgstr "排課"
+
+msgid "Overview"
+msgstr "總覽"
+
+msgid "Offerings"
+msgstr "開課"
+
+msgid "Teachers"
+msgstr "老師"
+
+msgid "Change requests"
+msgstr "調整申請"
+
+msgid "Publish"
+msgstr "公布"
+
+msgid "Terms"
+msgstr "學期"
+
+msgid "Classrooms"
+msgstr "教室"
+
+msgid "Class groups"
+msgstr "班級"
+
+msgid "Term"
+msgstr "學期"
+
+msgid "Go"
+msgstr "前往"
+
+msgid "Review"
+msgstr "查看"
+
+msgid "Schedule"
+msgstr "排課"
+
+msgid "Course"
+msgstr "課程"
+
+msgid "Class group"
+msgstr "班級"
+
+msgid "Status"
+msgstr "狀態"
+
+msgid "Current"
+msgstr "目前"
+
+msgid "Current:"
+msgstr "目前："
+
+msgid "Wants"
+msgstr "希望"
+
+msgid "Reason"
+msgstr "理由"
+
+msgid "Search"
+msgstr "搜尋"
+
+msgid "Submit"
+msgstr "送出"
+
+msgid "Submitted"
+msgstr "已送出"
+
+msgid "Not submitted"
+msgstr "尚未送出"
+
+msgid "Saved."
+msgstr "已儲存。"
+
+msgid "Saved “%(name)s”."
+msgstr "已儲存「%(name)s」。"
+
+msgid "Official course"
+msgstr "正式課程"
+
+msgid "Times, teacher and classroom come from the published timetable and can’t be changed here."
+msgstr "時段、老師和教室以公布的課表為準，這裡不能修改。"
+
+# 狀態
+msgid "Draft"
+msgstr "草稿"
+
+msgid "Waiting for teacher"
+msgstr "待老師確認"
+
+msgid "Change requested"
+msgstr "申請調整中"
+
+msgid "Accepted"
+msgstr "已確認"
+
+msgid "Published"
+msgstr "已公布"
+
+msgid "Waiting"
+msgstr "待處理"
+
+msgid "Approved"
+msgstr "已同意"
+
+msgid "Declined"
+msgstr "已婉拒"
+
+msgid "Available"
+msgstr "可以"
+
+msgid "Prefer not"
+msgstr "盡量避免"
+
+msgid "Unavailable"
+msgstr "不行"
+
+# 總覽
+msgid "+ New offering"
+msgstr "＋ 新增開課"
+
+msgid "Create a term first to start scheduling."
+msgstr "請先建立學期，才能開始排課。"
+
+msgid "Teacher availability"
+msgstr "老師可授課時段"
+
+msgid "%(done)s of %(total)s teachers submitted"
+msgstr "%(total)s 位老師中已有 %(done)s 位送出"
+
+msgid "Form open"
+msgstr "開放填寫中"
+
+msgid "Form closed"
+msgstr "已關閉填寫"
+
+msgid "Deadline %(date)s"
+msgstr "截止日 %(date)s"
+
+msgid "Needs attention"
+msgstr "待處理事項"
+
+msgid "%(counter)s change request waiting"
+msgid_plural "%(counter)s change requests waiting"
+msgstr[0] "%(counter)s 件調整申請待處理"
+
+msgid "“%(name)s” has no time slot yet"
+msgstr "「%(name)s」還沒排時段"
+
+msgid "Nothing to do right now."
+msgstr "目前沒有待處理的事。"
+
+# 學期、教室、班級
+msgid "Nothing here yet."
+msgstr "目前還沒有資料。"
+
+msgid "Add new"
+msgstr "新增"
+
+msgid "Edit “%(name)s”"
+msgstr "修改「%(name)s」"
+
+msgid "Open availability form"
+msgstr "開放填寫可授課時段"
+
+msgid "Close availability form"
+msgstr "關閉填寫"
+
+msgid "Availability: %(state)s · deadline %(deadline)s · %(published)s"
+msgstr "可授課時段：%(state)s · 截止日 %(deadline)s · %(published)s"
+
+msgid "open"
+msgstr "開放中"
+
+msgid "closed"
+msgstr "已關閉"
+
+msgid "published"
+msgstr "已公布"
+
+msgid "not published"
+msgstr "未公布"
+
+msgid "Availability form for %(term)s is open. Teachers have been notified."
+msgstr "已開放 %(term)s 的可授課時段填寫，並通知所有老師。"
+
+msgid "Availability form for %(term)s is closed."
+msgstr "已關閉 %(term)s 的可授課時段填寫。"
+
+msgid "“%(name)s” is used by an offering and can’t be deleted."
+msgstr "「%(name)s」已有開課使用，不能刪除。"
+
+# 開課
+msgid "No offerings in this term yet."
+msgstr "這個學期還沒有開課。"
+
+msgid "Send %(counter)s draft to teacher"
+msgid_plural "Send %(counter)s drafts to teachers"
+msgstr[0] "把 %(counter)s 門草稿送給老師確認"
+
+msgid "Sent %(count)s offering to teachers."
+msgid_plural "Sent %(count)s offerings to teachers."
+msgstr[0] "已把 %(count)s 門開課送給老師確認。"
+
+msgid "%(count)s draft still has problems and was not sent."
+msgid_plural "%(count)s drafts still have problems and were not sent."
+msgstr[0] "還有 %(count)s 門草稿有問題，沒有送出。"
+
+msgid "New offering"
+msgstr "新增開課"
+
+msgid "Edit offering"
+msgstr "修改開課"
+
+msgid "No teachers yet. Invite teachers first so you can assign them."
+msgstr "還沒有老師，請先邀請老師才能指定授課老師。"
+
+msgid "Save and schedule"
+msgstr "儲存並排課"
+
+# 排課看板
+msgid "Schedule: %(name)s"
+msgstr "排課：%(name)s"
+
+msgid "%(counter)s period per week"
+msgid_plural "%(counter)s periods per week"
+msgstr[0] "每週 %(counter)s 節"
+
+msgid "Teacher’s change request:"
+msgstr "老師的調整申請："
+
+msgid "Tick the periods for this course. Colors show the teacher’s availability."
+msgstr "勾選這門課的上課節次，格子顏色是老師的可授課時段。"
+
+msgid "Taken:"
+msgstr "已占用："
+
+msgid "Teacher or class group busy"
+msgstr "老師或班級已有課"
+
+msgid "Only free classrooms of the right type and size are listed."
+msgstr "只列出這些時段空著、類型和容量都符合的教室。"
+
+msgid "All checks passed."
+msgstr "全部檢查通過。"
+
+msgid "Save draft"
+msgstr "儲存草稿"
+
+msgid "Send to teacher"
+msgstr "送給老師確認"
+
+msgid "Select time slots."
+msgstr "請選擇上課時段。"
+
+msgid "Select a classroom."
+msgstr "請選擇教室。"
+
+msgid "Sent “%(name)s” to %(teacher)s for confirmation."
+msgstr "已把「%(name)s」送給%(teacher)s確認。"
+
+msgid "Saved “%(name)s” as a draft."
+msgstr "已將「%(name)s」存成草稿。"
+
+msgid "Unpublish “%(name)s” before rescheduling it."
+msgstr "請先撤回公布「%(name)s」，才能重新排課。"
+
+# 排課規則
+msgid "Selected %(selected)s periods, but this course needs %(needed)s."
+msgstr "目前選了 %(selected)s 節，但這門課每週需要 %(needed)s 節。"
+
+msgid "%(room)s is a %(kind)s, but this course needs a %(needed)s."
+msgstr "%(room)s 是%(kind)s，但這門課需要%(needed)s。"
+
+msgid "%(room)s holds %(capacity)s, fewer than the %(needed)s students allowed."
+msgstr "%(room)s 只能容納 %(capacity)s 人，少於這門課的人數上限 %(needed)s 人。"
+
+msgid "%(time)s: the teacher already teaches “%(course)s”."
+msgstr "%(time)s：老師已有「%(course)s」。"
+
+msgid "%(time)s: %(room)s is used by “%(course)s”."
+msgstr "%(time)s：%(room)s 已被「%(course)s」使用。"
+
+msgid "%(time)s: %(group)s already has “%(course)s”."
+msgstr "%(time)s：%(group)s 已有「%(course)s」。"
+
+msgid "%(time)s: the teacher is unavailable."
+msgstr "%(time)s：老師不能上課。"
+
+msgid "%(time)s: the teacher prefers not to teach."
+msgstr "%(time)s：老師希望盡量避免。"
+
+msgid "class group"
+msgstr "班級"
+
+# 調整申請（排課人員）
+msgid "Approve & reschedule"
+msgstr "同意並改排"
+
+msgid "Decline with note"
+msgstr "婉拒並說明"
+
+msgid "Reply to the teacher"
+msgstr "給老師的回覆"
+
+msgid "No change requests waiting."
+msgstr "沒有待處理的調整申請。"
+
+msgid "Recently resolved"
+msgstr "最近處理的申請"
+
+msgid "Approved. A new schedule will be sent to you."
+msgstr "已同意，排課人員會重新排課後送給你確認。"
+
+msgid "Write a reply explaining why the request is declined."
+msgstr "請填寫婉拒的理由。"
+
+msgid "Request for “%(name)s” %(result)s."
+msgstr "「%(name)s」的申請%(result)s。"
+
+# 老師與邀請
+msgid "No teachers yet."
+msgstr "還沒有老師。"
+
+msgid "Pending invitations"
+msgstr "待接受的邀請"
+
+msgid "expires %(date)s"
+msgstr "%(date)s 到期"
+
+msgid "expired"
+msgstr "已過期"
+
+msgid "Resend"
+msgstr "重新寄送"
+
+msgid "No pending invitations."
+msgstr "沒有待接受的邀請。"
+
+msgid "Invite a teacher"
+msgstr "邀請老師"
+
+msgid "We’ll email a link that’s valid for 7 days. The teacher creates an account (or logs in) to accept."
+msgstr "系統會寄出 7 天內有效的連結，老師建立帳號（或登入）後即可接受邀請。"
+
+msgid "Send invitation"
+msgstr "寄出邀請"
+
+msgid "Teacher’s name"
+msgstr "老師姓名"
+
+msgid "Invitation sent to %(email)s."
+msgstr "已寄出邀請給 %(email)s。"
+
+# 公布
+msgid "Publish timetable"
+msgstr "公布課表"
+
+msgid "First published on %(date)s."
+msgstr "首次公布於 %(date)s。"
+
+msgid "%(counter)s offering is not accepted yet and won’t be published."
+msgid_plural "%(counter)s offerings are not accepted yet and won’t be published."
+msgstr[0] "還有 %(counter)s 門開課尚未確認，不會公布。"
+
+msgid "Publish %(counter)s accepted offering"
+msgid_plural "Publish %(counter)s accepted offerings"
+msgstr[0] "公布 %(counter)s 門已確認的開課"
+
+msgid "Unpublish"
+msgstr "撤回公布"
+
+msgid "Published %(count)s offering."
+msgid_plural "Published %(count)s offerings."
+msgstr[0] "已公布 %(count)s 門開課。"
+
+msgid "Unpublished “%(name)s”."
+msgstr "已撤回公布「%(name)s」。"
+
+# 老師：接受邀請
+msgid "Teacher invitation"
+msgstr "老師邀請"
+
+msgid "You’re invited to teach"
+msgstr "邀請你加入授課"
+
+msgid "Invitation already used"
+msgstr "邀請已使用"
+
+msgid "This invitation has already been accepted."
+msgstr "這個邀請已經被接受了。"
+
+msgid "Go to teacher pages"
+msgstr "前往授課頁面"
+
+msgid "Invitation expired"
+msgstr "邀請已過期"
+
+msgid "Ask the scheduler to send you a new invitation."
+msgstr "請排課人員重新寄一封邀請給你。"
+
+msgid "Hi %(name)s, %(inviter)s invited you to join Online Timetable as a teacher."
+msgstr "%(name)s 你好，%(inviter)s 邀請你以老師身分加入線上個人課表。"
+
+msgid "You’ll accept as %(username)s."
+msgstr "將以 %(username)s 帳號接受邀請。"
+
+msgid "Accept invitation"
+msgstr "接受邀請"
+
+msgid "Create an account"
+msgstr "建立帳號"
+
+msgid "Already have one?"
+msgstr "已經有帳號了？"
+
+msgid "Log in to accept"
+msgstr "登入後接受"
+
+msgid "This invitation expires on %(date)s."
+msgstr "這個邀請將於 %(date)s 到期。"
+
+msgid "Welcome! You can now use the teacher pages."
+msgstr "歡迎！你現在可以使用授課頁面了。"
+
+# 老師：首頁、可授課時段、我的授課
+msgid "The scheduler hasn’t created a term yet."
+msgstr "排課人員還沒有建立學期。"
+
+msgid "My availability"
+msgstr "我的可授課時段"
+
+msgid "My classes"
+msgstr "我的授課"
+
+msgid "%(counter)s to confirm"
+msgid_plural "%(counter)s to confirm"
+msgstr[0] "%(counter)s 門待確認"
+
+msgid "%(counter)s class scheduled"
+msgid_plural "%(counter)s classes scheduled"
+msgstr[0] "已排 %(counter)s 門課"
+
+msgid "My change requests"
+msgstr "我的調整申請"
+
+msgid "Submitted %(date)s"
+msgstr "已於 %(date)s 送出"
+
+msgid "The availability form is closed. Contact the scheduler if you need to change it."
+msgstr "可授課時段已關閉填寫，需要修改請聯絡排課人員。"
+
+msgid "Tap a cell to switch: ✓ Available → ~ Prefer not → ✗ Unavailable."
+msgstr "點一下格子切換：✓ 可以 → ~ 盡量避免 → ✗ 不行。"
+
+msgid "Set all available"
+msgstr "全部設為可以"
+
+msgid "Submitted. Thank you!"
+msgstr "已送出，謝謝！"
+
+msgid "Accept all pending"
+msgstr "全部接受"
+
+msgid "Accept"
+msgstr "接受"
+
+msgid "Request change"
+msgstr "申請調整"
+
+msgid "Waiting for the scheduler"
+msgstr "等待排課人員處理"
+
+msgid "No classes have been sent to you yet."
+msgstr "還沒有排給你的課。"
+
+msgid "Accepted %(count)s class."
+msgid_plural "Accepted %(count)s classes."
+msgstr[0] "已接受 %(count)s 門課。"
+
+msgid "Request a change"
+msgstr "申請調整"
+
+msgid "Request a change: %(name)s"
+msgstr "申請調整：%(name)s"
+
+msgid "Preferred times (optional)"
+msgstr "希望的時段（可不選）"
+
+msgid "Send request"
+msgstr "送出申請"
+
+msgid "Your request has been sent to the scheduler."
+msgstr "已把申請送給排課人員。"
+
+# 課程目錄
+msgid "Course catalog"
+msgstr "課程目錄"
+
+msgid "No timetable has been published yet."
+msgstr "還沒有公布的課表。"
+
+msgid "Search course or teacher…"
+msgstr "搜尋課程或老師…"
+
+msgid "All class groups"
+msgstr "所有班級"
+
+msgid "All categories"
+msgstr "所有類別"
+
+msgid "⚠ “%(name)s” overlaps with your timetable:"
+msgstr "⚠「%(name)s」和你的課表衝堂："
+
+msgid "Add anyway"
+msgstr "仍要加入"
+
+msgid "In my timetable"
+msgstr "已在我的課表"
+
+msgid "+ Add"
+msgstr "＋ 加入"
+
+msgid "No courses match your search."
+msgstr "沒有符合條件的課程。"
+
+# 通知信
+msgid "Hi %(name)s,\n\n%(inviter)s invited you to join Online Timetable as a teacher. Open the link below to accept (valid for 7 days):\n\n%(link)s"
+msgstr "%(name)s 你好：\n\n%(inviter)s 邀請你以老師身分加入線上個人課表。請在 7 天內點下面的連結接受邀請：\n\n%(link)s"
+
+msgid "Please submit your availability for %(term)s"
+msgstr "請填寫 %(term)s 的可授課時段"
+
+msgid "The availability form for %(term)s is open. Please mark the periods you can and can’t teach by %(deadline)s:\n\n%(link)s"
+msgstr "%(term)s 的可授課時段已開放填寫，請在 %(deadline)s 前標示可以和不能上課的節次：\n\n%(link)s"
+
+msgid "Please confirm your class schedule"
+msgstr "請確認你的排課"
+
+msgid "These classes have been scheduled for you. Please accept them or request a change:\n\n%(lines)s\n\n%(link)s"
+msgstr "以下課程已排定，請接受或申請調整：\n\n%(lines)s\n\n%(link)s"
+
+msgid "Change requested: %(course)s"
+msgstr "調整申請：%(course)s"
+
+msgid "%(teacher)s requested a change to “%(course)s”.\n\nReason: %(reason)s\n\n%(link)s"
+msgstr "%(teacher)s 申請調整「%(course)s」。\n\n理由：%(reason)s\n\n%(link)s"
+
+msgid "Your change request for %(course)s was %(result)s"
+msgstr "你對「%(course)s」的調整申請：%(result)s"
+
+msgid "Reply from the scheduler: %(reply)s\n\n%(link)s"
+msgstr "排課人員的回覆：%(reply)s\n\n%(link)s"
+
+msgid "The %(term)s timetable is published"
+msgstr "%(term)s 課表已公布"
+
+msgid "The timetable for %(term)s is now published. Students can add your classes from the catalog.\n\n%(link)s"
+msgstr "%(term)s 的課表已公布，學生可以從課程目錄加入你的課。\n\n%(link)s"
+
+# 資料模型（欄位名稱、後台）
+msgid "official course"
+msgstr "正式課程"
+
+msgid "name"
+msgstr "名稱"
+
+msgid "For example 115-1"
+msgstr "例如 115-1"
+
+msgid "availability form open"
+msgstr "開放填寫可授課時段"
+
+msgid "availability deadline"
+msgstr "可授課時段填寫截止日"
+
+msgid "published at"
+msgstr "公布時間"
+
+msgid "term"
+msgstr "學期"
+
+msgid "terms"
+msgstr "學期"
+
+msgid "General classroom"
+msgstr "一般教室"
+
+msgid "Computer lab"
+msgstr "電腦教室"
+
+msgid "capacity"
+msgstr "容納人數"
+
+msgid "type"
+msgstr "類型"
+
+msgid "classrooms"
+msgstr "教室"
+
+msgid "For example IM 3A"
+msgstr "例如 資管三甲"
+
+msgid "class groups"
+msgstr "班級"
+
+msgid "periods per week"
+msgstr "每週節數"
+
+msgid "classroom type needed"
+msgstr "需要的教室類型"
+
+msgid "maximum students"
+msgstr "人數上限"
+
+msgid "status"
+msgstr "狀態"
+
+msgid "offering"
+msgstr "開課"
+
+msgid "offerings"
+msgstr "開課"
+
+msgid "submitted at"
+msgstr "送出時間"
+
+msgid "teacher availability"
+msgstr "老師可授課時段"
+
+msgid "reason"
+msgstr "理由"
+
+msgid "reply"
+msgstr "回覆"
+
+msgid "requested at"
+msgstr "申請時間"
+
+msgid "resolved at"
+msgstr "處理時間"
+
+msgid "change request"
+msgstr "調整申請"
+
+msgid "change requests"
+msgstr "調整申請"
+
+msgid "email"
+msgstr "Email"
+
+msgid "teacher invitation"
+msgstr "老師邀請"
+
+msgid "teacher invitations"
+msgstr "老師邀請"

@@ -5,10 +5,11 @@ from django.db import transaction
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext
 
 from .conflicts import assign_lanes, find_conflicts
-from .forms import CourseForm, CourseTimeFormSet, SignUpForm
+from .forms import CourseForm, CourseTimeFormSet, OfficialCourseForm, SignUpForm
 from .models import Course, CourseTime, Period, ShareLink
 
 
@@ -18,9 +19,18 @@ def home(request):
     return render(request, 'home.html')
 
 
+def _safe_next(request):
+    """註冊、登入後要回去的網址（例如老師的邀請頁）；只接受本站網址。"""
+    target = request.POST.get('next') or request.GET.get('next') or ''
+    if url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return target
+    return ''
+
+
 def signup(request):
+    next_url = _safe_next(request)
     if request.user.is_authenticated:
-        return redirect('timetable')
+        return redirect(next_url or 'timetable')
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
@@ -29,10 +39,10 @@ def signup(request):
             messages.success(
                 request, gettext('Welcome, %(name)s! Your account has been created.') % {'name': user.username}
             )
-            return redirect('timetable')
+            return redirect(next_url or 'timetable')
     else:
         form = SignUpForm()
-    return render(request, 'registration/signup.html', {'form': form})
+    return render(request, 'registration/signup.html', {'form': form, 'next': next_url})
 
 
 # 課表至少顯示到第 8 節，有更晚的課再往下延伸
@@ -181,6 +191,8 @@ def _edit_course(request, course):
     """新增與修改共用：課程本體與上課時段要一起驗證、一起儲存。"""
     is_new = course.pk is None
     conflicts = []
+    if course.offering_id:
+        return _edit_official_course(request, course)
     if request.method == 'POST':
         form = CourseForm(request.POST, instance=course)
         formset = CourseTimeFormSet(request.POST, instance=course)
@@ -209,6 +221,16 @@ def _edit_course(request, course):
         'is_new': is_new,
         'conflicts': conflicts,
     })
+
+
+def _edit_official_course(request, course):
+    """從課程目錄加入的正式課程：時段、老師、教室以排課結果為準，學生只能改顏色和備註。"""
+    form = OfficialCourseForm(request.POST or None, instance=course)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, gettext('Updated “%(name)s”.') % {'name': course.name})
+        return redirect('timetable')
+    return render(request, 'schedule/course_form.html', {'form': form, 'official': course, 'is_new': False})
 
 
 @login_required

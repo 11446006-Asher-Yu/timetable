@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Teaching" %} | {% translate "Online Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="page-heading"><h1>{% translate "Teaching" %}{% if term %} · {{ term.name }}{% endif %}</h1></div>
+
+  {% if not term %}
+    <p class="empty">{% translate "The scheduler hasn’t created a term yet." %}</p>
+  {% else %}
+    <div class="tile-row">
+      <a class="tile" href="{% url 'scheduling:availability' %}">
+        <span class="tile-label">{% translate "My availability" %}</span>
+        <strong>
+          {% if availability.submitted_at %}{% translate "Submitted" %}
+          {% elif term.availability_editable %}{% translate "Not submitted" %}
+          {% else %}{% translate "Form closed" %}{% endif %}
+        </strong>
+        {% if term.availability_deadline %}<span class="muted">{% blocktranslate with date=term.availability_deadline|date:'Y-m-d' %}Deadline {{ date }}{% endblocktranslate %}</span>{% endif %}
+      </a>
+      <a class="tile" href="{% url 'scheduling:teaching' %}">
+        <span class="tile-label">{% translate "My classes" %}</span>
+        <strong>{% blocktranslate count counter=pending %}{{ counter }} to confirm{% plural %}{{ counter }} to confirm{% endblocktranslate %}</strong>
+        <span class="muted">{% blocktranslate count counter=total %}{{ counter }} class scheduled{% plural %}{{ counter }} classes scheduled{% endblocktranslate %}</span>
+      </a>
+    </div>
+
+    {% if recent %}
+      <h2 class="section-title">{% translate "My change requests" %}</h2>
+      <ul class="row-list">
+        {% for change in recent %}
+          <li><div><strong>{{ change.offering.name }}</strong> · {{ change.get_status_display }}
+            {% if change.response %}<div class="muted">{{ change.response }}</div>{% endif %}</div></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endif %}
+</section>
+{% endblock %}

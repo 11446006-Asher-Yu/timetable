@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Offerings" %} | {% translate "Online Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="page-heading">
+    <h1>{% translate "Offerings" %}{% if term %} · {{ term.name }}{% endif %}</h1>
+    <div class="toolbar">
+      {% include 'scheduling/_term_picker.html' %}
+      {% if sendable %}
+        <form method="post" action="{% url 'scheduling:offering_send_all' %}" class="inline-form">
+          {% csrf_token %}
+          <button type="submit" class="button button-outline">{% blocktranslate count counter=sendable|length %}Send {{ counter }} draft to teacher{% plural %}Send {{ counter }} drafts to teachers{% endblocktranslate %}</button>
+        </form>
+      {% endif %}
+      <a href="{% url 'scheduling:offering_new' %}" class="button">{% translate "+ New offering" %}</a>
+    </div>
+  </div>
+  {% include 'scheduling/_scheduler_nav.html' with active='offerings' %}
+
+  {% if offerings %}
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{% translate "Course" %}</th><th>{% translate "Class group" %}</th><th>{% translate "Teacher" %}</th>
+            <th>{% translate "Times" %}</th><th>{% translate "Classroom" %}</th><th>{% translate "Status" %}</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for offering in offerings %}
+            <tr>
+              <td><strong>{{ offering.name }}</strong><div class="muted">{% blocktranslate count credits=offering.credits %}{{ credits }} credit{% plural %}{{ credits }} credits{% endblocktranslate %}</div></td>
+              <td>{{ offering.class_group }}</td>
+              <td>{{ offering.teacher.get_full_name|default:offering.teacher.username }}</td>
+              <td>{% for time in offering.times.all %}{{ time }}{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="muted">—</span>{% endfor %}</td>
+              <td>{{ offering.classroom.name|default:"—" }}</td>
+              <td>{% include 'scheduling/_status.html' %}</td>
+              <td class="row-actions">
+                {% if offering.status != 'published' %}<a href="{% url 'scheduling:board' offering.pk %}">{% translate "Schedule" %}</a>{% endif %}
+                <a href="{% url 'scheduling:offering_edit' offering.pk %}">{% translate "Edit" %}</a>
+                <form method="post" action="{% url 'scheduling:offering_delete' offering.pk %}" class="inline-form">
+                  {% csrf_token %}
+                  <button type="submit" class="link-button danger-link">{% translate "Delete" %}</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">{% translate "No offerings in this term yet." %}</p>
+  {% endif %}
+</section>
+{% endblock %}

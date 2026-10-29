@@ -1,0 +1,12 @@
+{% load i18n %}
+{# 排課人員各頁上方的分頁選單；active 由各頁傳入 #}
+<nav class="sub-nav" aria-label="{% translate 'Scheduling' %}">
+  <a href="{% url 'scheduling:dashboard' %}" {% if active == 'dashboard' %}class="is-active" aria-current="page"{% endif %}>{% translate "Overview" %}</a>
+  <a href="{% url 'scheduling:offerings' %}" {% if active == 'offerings' %}class="is-active" aria-current="page"{% endif %}>{% translate "Offerings" %}</a>
+  <a href="{% url 'scheduling:teachers' %}" {% if active == 'teachers' %}class="is-active" aria-current="page"{% endif %}>{% translate "Teachers" %}</a>
+  <a href="{% url 'scheduling:requests' %}" {% if active == 'requests' %}class="is-active" aria-current="page"{% endif %}>{% translate "Change requests" %}</a>
+  <a href="{% url 'scheduling:publish' %}" {% if active == 'publish' %}class="is-active" aria-current="page"{% endif %}>{% translate "Publish" %}</a>
+  <a href="{% url 'scheduling:manage' 'terms' %}" {% if active == 'terms' %}class="is-active" aria-current="page"{% endif %}>{% translate "Terms" %}</a>
+  <a href="{% url 'scheduling:manage' 'classrooms' %}" {% if active == 'classrooms' %}class="is-active" aria-current="page"{% endif %}>{% translate "Classrooms" %}</a>
+  <a href="{% url 'scheduling:manage' 'groups' %}" {% if active == 'groups' %}class="is-active" aria-current="page"{% endif %}>{% translate "Class groups" %}</a>
+</nav>

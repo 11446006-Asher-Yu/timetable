@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Course catalog" %} | {% translate "Online Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="page-heading">
+    <h1>{% translate "Course catalog" %}{% if term %} · {{ term.name }}{% endif %}</h1>
+    <div class="toolbar">{% include 'scheduling/_term_picker.html' %}</div>
+  </div>
+
+  {% if not term %}
+    <p class="empty">{% translate "No timetable has been published yet." %}</p>
+  {% else %}
+    <form method="get" class="filter-bar">
+      <input type="hidden" name="term" value="{{ term.pk }}">
+      <input type="search" name="q" value="{{ query }}" placeholder="{% translate 'Search course or teacher…' %}" aria-label="{% translate 'Search' %}">
+      <select name="group" aria-label="{% translate 'Class group' %}">
+        <option value="">{% translate "All class groups" %}</option>
+        {% for group in groups %}<option value="{{ group.pk }}" {% if group_id == group.pk|stringformat:'s' %}selected{% endif %}>{{ group }}</option>{% endfor %}
+      </select>
+      <select name="category" aria-label="{% translate 'Category' %}">
+        <option value="">{% translate "All categories" %}</option>
+        {% for value, label in categories %}<option value="{{ value }}" {% if value == category %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="button button-outline">{% translate "Search" %}</button>
+    </form>
+
+    {% if conflict_offering %}
+      <form method="post" class="conflict-warning" role="alert">
+        {% csrf_token %}
+        <p><strong>{% blocktranslate with name=conflict_offering.name %}⚠ “{{ name }}” overlaps with your timetable:{% endblocktranslate %}</strong></p>
+        <ul>{% for conflict in conflicts %}<li>{{ conflict }}</li>{% endfor %}</ul>
+        <input type="hidden" name="offering" value="{{ conflict_offering.pk }}">
+        <input type="hidden" name="allow_conflict" value="1">
+        <button type="submit" class="button button-danger">{% translate "Add anyway" %}</button>
+      </form>
+    {% endif %}
+
+    {% if offerings %}
+      <ul class="course-list catalog-list">
+        {% for offering in offerings %}
+          <li class="course-item" style="border-left-color: {{ offering.color }}">
+            <div class="course-info">
+              <strong>{{ offering.name }}</strong>
+              <span class="tag" style="background: {{ offering.color }}">{{ offering.get_category_display }}</span>
+              <span class="muted">{% blocktranslate count credits=offering.credits %}{{ credits }} credit{% plural %}{{ credits }} credits{% endblocktranslate %}</span>
+              <div class="muted">
+                {{ offering.teacher_name }} · {{ offering.class_group }} · {{ offering.time_list|join:", " }} · {{ offering.classroom.name|default:"—" }}
+              </div>
+            </div>
+            <div class="course-actions">
+              {% if offering.pk in added %}
+                <span class="added-mark">✓ {% translate "In my timetable" %}</span>
+              {% else %}
+                <form method="post" class="inline-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="offering" value="{{ offering.pk }}">
+                  <button type="submit" class="button button-small">{% translate "+ Add" %}</button>
+                </form>
+              {% endif %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty">{% translate "No courses match your search." %}</p>
+    {% endif %}
+  {% endif %}
+</section>
+{% endblock %}

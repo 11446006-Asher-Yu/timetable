@@ -24,4 +24,6 @@ urlpatterns = [
     # 頁首的 EN／中文 切換鈕送到這裡（Django 內建的 set_language）
     path('i18n/', include('django.conf.urls.i18n')),
     path('', include('schedule.urls')),
+    # 第二階段：排課人員、老師、課程目錄
+    path('', include('scheduling.urls')),
 ]

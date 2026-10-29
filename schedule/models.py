@@ -73,6 +73,15 @@ class Course(models.Model):
         help_text=_('Leave blank to use the category color.'),
     )
     note = models.TextField(_('note'), blank=True)
+    # 從課程目錄加入的正式課程；有值時學生不能改時段（見 scheduling app）
+    offering = models.ForeignKey(
+        'scheduling.Offering',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='student_courses',
+        verbose_name=_('official course'),
+    )
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
 

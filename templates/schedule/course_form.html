@@ -8,8 +8,17 @@
   <h1>{% if is_new %}{% translate "Add course" %}{% else %}{% translate "Edit course" %}{% endif %}</h1>
   <form method="post" novalidate>
     {% csrf_token %}
+    {% if official %}
+      {# 正式課程：課程資料以排課結果為準，只能改顏色與備註 #}
+      <div class="official-info">
+        <p><span class="official-tag">{% translate "Official course" %}</span> <strong>{{ official.name }}</strong></p>
+        <p class="muted">{{ official.teacher }} · {{ official.classroom|default:"—" }} · {% for time in official.times.all %}{{ time }}{% if not forloop.last %}{% translate ", " context "list separator" %}{% endif %}{% endfor %}</p>
+        <p class="help-text">{% translate "Times, teacher and classroom come from the published timetable and can’t be changed here." %}</p>
+      </div>
+    {% endif %}
     {% include '_form_fields.html' %}
 
+    {% if not official %}
     <fieldset class="time-fieldset">
       <legend>{% translate "Class times" %}</legend>
       {{ formset.management_form }}
@@ -24,6 +33,7 @@
       </template>
       <button type="button" id="add-time" class="button button-outline button-small-outline">{% translate "+ Add another time" %}</button>
     </fieldset>
+    {% endif %}
 
     {% if conflicts %}
       <div class="conflict-warning" role="alert">

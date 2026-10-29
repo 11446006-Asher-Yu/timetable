@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Teachers" %} | {% translate "Online Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="page-heading"><h1>{% translate "Teachers" %}</h1></div>
+  {% include 'scheduling/_scheduler_nav.html' with active='teachers' %}
+
+  <div class="split">
+    <div>
+      <h2 class="section-title">{% translate "Teachers" %}</h2>
+      {% if teachers %}
+        <ul class="row-list">
+          {% for teacher in teachers %}
+            <li><div><strong>{{ teacher.name }}</strong><div class="muted">{{ teacher.user.email }}</div></div></li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">{% translate "No teachers yet." %}</p>
+      {% endif %}
+
+      <h2 class="section-title">{% translate "Pending invitations" %}</h2>
+      {% if invitations %}
+        <ul class="row-list">
+          {% for invite in invitations %}
+            <li>
+              <div>
+                <strong>{{ invite.name }}</strong>
+                <div class="muted">{{ invite.email }} ·
+                  {% if invite.is_usable %}{% blocktranslate with date=invite.expires_at|date:'Y-m-d' %}expires {{ date }}{% endblocktranslate %}{% else %}{% translate "expired" %}{% endif %}
+                </div>
+              </div>
+              <form method="post" action="{% url 'scheduling:invitation_resend' invite.pk %}" class="inline-form">
+                {% csrf_token %}
+                <button type="submit" class="link-button">{% translate "Resend" %}</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">{% translate "No pending invitations." %}</p>
+      {% endif %}
+    </div>
+
+    <form method="post" class="panel">
+      <h2>{% translate "Invite a teacher" %}</h2>
+      <p class="muted">{% translate "We’ll email a link that’s valid for 7 days. The teacher creates an account (or logs in) to accept." %}</p>
+      {% csrf_token %}
+      {% include '_form_fields.html' %}
+      <button type="submit" class="button button-block">{% translate "Send invitation" %}</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
