@@ -1,4 +1,4 @@
-# 線上個人課表：繁體中文翻譯
+# 校園課表系統：繁體中文翻譯
 # 改完後執行 python scripts/i18n_tools.py extract 確認沒有缺漏，再執行 compile 產生 django.mo
 msgid ""
 msgstr ""
@@ -10,8 +10,8 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 # ===== 共用 =====
-msgid "Online Timetable"
-msgstr "線上個人課表"
+msgid "Campus Timetable"
+msgstr "校園課表系統"
 
 msgid "Timetable"
 msgstr "課表"
@@ -131,14 +131,14 @@ msgstr "請用新密碼登入。"
 msgid "Go to log in"
 msgstr "前往登入"
 
-msgid "[Online Timetable] Reset your password"
-msgstr "【線上個人課表】重設密碼"
+msgid "[Campus Timetable] Reset your password"
+msgstr "【校園課表系統】重設密碼"
 
 msgid "Hi %(name)s,"
 msgstr "%(name)s 你好："
 
-msgid "We received a request to reset the password for your Online Timetable account. Use the link below within 24 hours to set a new password:"
-msgstr "我們收到重設「線上個人課表」帳號密碼的申請。請在 24 小時內點下面的連結設定新密碼："
+msgid "We received a request to reset the password for your Campus Timetable account. Use the link below within 24 hours to set a new password:"
+msgstr "我們收到重設「校園課表系統」帳號密碼的申請。請在 24 小時內點下面的連結設定新密碼："
 
 msgid "If you didn’t request this, just ignore this email. Your password won’t change."
 msgstr "如果不是你本人申請，請直接忽略這封信，你的密碼不會改變。"
@@ -960,8 +960,8 @@ msgstr "邀請已過期"
 msgid "Ask the scheduler to send you a new invitation."
 msgstr "請排課人員重新寄一封邀請給你。"
 
-msgid "Hi %(name)s, %(inviter)s invited you to join Online Timetable as a teacher."
-msgstr "%(name)s 你好，%(inviter)s 邀請你以老師身分加入線上個人課表。"
+msgid "Hi %(name)s, %(inviter)s invited you to join Campus Timetable as a teacher."
+msgstr "%(name)s 你好，%(inviter)s 邀請你以老師身分加入校園課表系統。"
 
 msgid "You’ll accept as %(username)s."
 msgstr "將以 %(username)s 帳號接受邀請。"
@@ -1086,8 +1086,8 @@ msgid "No courses match your search."
 msgstr "沒有符合條件的課程。"
 
 # 通知信
-msgid "Hi %(name)s,\n\n%(inviter)s invited you to join Online Timetable as a teacher. Open the link below to accept (valid for 7 days):\n\n%(link)s"
-msgstr "%(name)s 你好：\n\n%(inviter)s 邀請你以老師身分加入線上個人課表。請在 7 天內點下面的連結接受邀請：\n\n%(link)s"
+msgid "Hi %(name)s,\n\n%(inviter)s invited you to join Campus Timetable as a teacher. Open the link below to accept (valid for 7 days):\n\n%(link)s"
+msgstr "%(name)s 你好：\n\n%(inviter)s 邀請你以老師身分加入校園課表系統。請在 7 天內點下面的連結接受邀請：\n\n%(link)s"
 
 msgid "Please submit your availability for %(term)s"
 msgstr "請填寫 %(term)s 的可授課時段"

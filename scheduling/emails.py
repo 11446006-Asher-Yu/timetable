@@ -25,7 +25,7 @@ def _send(recipients, build):
         subject_en, body_en = build()
     with translation.override('zh-hant'):
         subject_zh, body_zh = build()
-    subject = f'[Online Timetable] {subject_en} / {subject_zh}'
+    subject = f'[Campus Timetable] {subject_en} / {subject_zh}'
     body = f'{body_en}\n\n— — —\n\n{body_zh}\n'
     try:
         send_mail(subject, body, None, recipients)
@@ -40,7 +40,7 @@ def _emails_of(group_name):
 def invitation(invite, link):
     _send([invite.email], lambda: (
         gettext('You’re invited to teach'),
-        gettext('Hi %(name)s,\n\n%(inviter)s invited you to join Online Timetable as a teacher. '
+        gettext('Hi %(name)s,\n\n%(inviter)s invited you to join Campus Timetable as a teacher. '
                 'Open the link below to accept (valid for 7 days):\n\n%(link)s')
         % {'name': invite.name, 'inviter': display_name(invite.invited_by), 'link': link},
     ))

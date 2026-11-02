@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% translate "Teacher invitation" %} | {% translate "Online Timetable" %}{% endblock %}
+{% block title %}{% translate "Teacher invitation" %} | {% translate "Campus Timetable" %}{% endblock %}
 
 {% block content %}
 <section class="card auth-card">
@@ -14,7 +14,7 @@
     <p>{% translate "Ask the scheduler to send you a new invitation." %}</p>
   {% else %}
     <h1>{% translate "You’re invited to teach" %}</h1>
-    <p>{% blocktranslate with name=invite.name inviter=invite.invited_by.get_full_name|default:invite.invited_by.username %}Hi {{ name }}, {{ inviter }} invited you to join Online Timetable as a teacher.{% endblocktranslate %}</p>
+    <p>{% blocktranslate with name=invite.name inviter=invite.invited_by.get_full_name|default:invite.invited_by.username %}Hi {{ name }}, {{ inviter }} invited you to join Campus Timetable as a teacher.{% endblocktranslate %}</p>
     {% if user.is_authenticated %}
       <form method="post">
         {% csrf_token %}

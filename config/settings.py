@@ -213,7 +213,7 @@ if django.VERSION < (6, 1):
     EMAIL_USE_TLS = _options.get('use_tls', False)
     EMAIL_TIMEOUT = _options.get('timeout')
 
-DEFAULT_FROM_EMAIL = f'Online Timetable <{EMAIL_ACCOUNT or "noreply@localhost"}>'
+DEFAULT_FROM_EMAIL = f'Campus Timetable <{EMAIL_ACCOUNT or "noreply@localhost"}>'
 
 # 重設密碼連結的有效時間（秒）
 PASSWORD_RESET_TIMEOUT = 60 * 60 * 24

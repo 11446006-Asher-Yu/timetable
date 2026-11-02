@@ -326,7 +326,7 @@ class PasswordResetTests(TestCase):
         self.assertRedirects(response, reverse('password_reset_done'))
         self.assertEqual(len(mail.outbox), 1)
         message = mail.outbox[0]
-        self.assertEqual(message.subject, '[Online Timetable] Reset your password')
+        self.assertEqual(message.subject, '[Campus Timetable] Reset your password')
         self.assertIn('Hi student,', message.body)
 
         link = next(line for line in message.body.splitlines() if '/accounts/reset/' in line)
@@ -485,7 +485,7 @@ class LanguageTests(TestCase):
         self.client.logout()  # 測試用戶端登出會清掉所有 Cookie，要重新選一次語言
         self.switch_to_chinese()
         self.client.post(reverse('password_reset'), {'email': 'student@example.com'})
-        self.assertEqual(mail.outbox[0].subject, '【線上個人課表】重設密碼')
+        self.assertEqual(mail.outbox[0].subject, '【校園課表系統】重設密碼')
         self.assertIn('student 你好', mail.outbox[0].body)
 
     def test_every_string_has_a_chinese_translation(self):

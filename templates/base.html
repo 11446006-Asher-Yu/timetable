@@ -4,13 +4,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{% translate "Online Timetable" %}{% endblock %}</title>
+  <title>{% block title %}{% translate "Campus Timetable" %}{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <script src="{% static 'js/ui.js' %}" defer></script>
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="{% url 'home' %}">📅 {% translate "Online Timetable" %}</a>
+    <a class="brand" href="{% url 'home' %}">📅 {% translate "Campus Timetable" %}</a>
     <nav class="site-nav">
       {# 語言切換：送到 Django 內建的 set_language，選擇記在 Cookie，回到目前頁面 #}
       <form method="post" action="{% url 'set_language' %}" class="inline-form lang-switch">

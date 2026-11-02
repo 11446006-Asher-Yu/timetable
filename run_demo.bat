@@ -1,6 +1,6 @@
 @echo off
 rem ============================================================
-rem  Online Timetable - one-click local demo for Windows
+rem  Campus Timetable - one-click local demo for Windows
 rem  1. find Python 3.10+   2. create .venv   3. install packages
 rem  4. create database + demo data   5. start server + open browser
 rem ============================================================
