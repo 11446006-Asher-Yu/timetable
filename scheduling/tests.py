@@ -420,6 +420,14 @@ class SeatsAndWaitlistTests(SchedulingTestCase):
         self.client.force_login(self.third)
         self.assertContains(self.client.get(reverse('scheduling:catalog')), 'Waitlist #1')
 
+    def test_teacher_sees_enrolled_and_waitlist_counts(self):
+        self.catalog_post(self.first)
+        self.catalog_post(self.second, 'waitlist')
+        self.client.force_login(self.seminar.teacher)
+        response = self.client.get(reverse('scheduling:teaching'))
+        self.assertContains(response, 'Enrolled 1 / 1')
+        self.assertContains(response, 'Waitlist 1')
+
     def test_cannot_waitlist_when_seats_left(self):
         response = self.catalog_post(self.first, 'waitlist')
         self.assertContains(response, 'still has seats')

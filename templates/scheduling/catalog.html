@@ -5,7 +5,7 @@
 
 {% block content %}
 <section class="card">
-  <div class="page-heading">
+  <div class="page-heading catalog-heading">
     <h1>{% translate "Course catalog" %}{% if term %} · {{ term.name }}{% endif %}</h1>
     <div class="toolbar">{% include 'scheduling/_term_picker.html' %}</div>
   </div>
@@ -13,7 +13,7 @@
   {% if not term %}
     <p class="empty">{% translate "No timetable has been published yet." %}</p>
   {% else %}
-    <form method="get" class="filter-bar">
+    <form method="get" class="filter-bar catalog-filter">
       <input type="hidden" name="term" value="{{ term.pk }}">
       <input type="search" name="q" value="{{ query }}" placeholder="{% translate 'Search course or teacher…' %}" aria-label="{% translate 'Search' %}">
       <select name="group" aria-label="{% translate 'Class group' %}">

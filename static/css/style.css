@@ -148,6 +148,11 @@ a {
   color: #FFFFFF;
 }
 
+/* 小的外框按鈕：文字維持主色（否則會被上面的白字蓋掉） */
+.button-small.button-outline {
+  color: var(--color-primary);
+}
+
 .button-block {
   display: block;
   width: 100%;
@@ -1328,6 +1333,21 @@ a {
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 16px;
+}
+
+/* 課程目錄：標題列和搜尋列之間留出空間，欄位高度一致 */
+.catalog-heading {
+  margin-bottom: 20px;
+}
+
+.catalog-filter {
+  margin-bottom: 24px;
+}
+
+.catalog-filter input,
+.catalog-filter select,
+.catalog-heading .term-picker select {
+  min-height: 40px;
 }
 
 .filter-bar input[type="search"] {

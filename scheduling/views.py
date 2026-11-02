@@ -557,6 +557,8 @@ def teaching(request):
         count = targets.update(status=Offering.Status.ACCEPTED)
         messages.success(request, ngettext('Accepted %(count)s class.', 'Accepted %(count)s classes.', count) % {'count': count})
         return redirect('scheduling:teaching')
+    # 老師也看得到每門課已加入與候補的人數
+    mine = mine.annotate(enrolled=Count('student_courses', distinct=True), waiting=Count('waitlist', distinct=True))
     grid = week_grid()
     placed = {}
     for offering in mine:

@@ -23,6 +23,12 @@
           <div>
             <strong>{{ offering.name }}</strong> · {{ offering.class_group }} {% include 'scheduling/_status.html' %}
             <div class="muted">{{ offering.time_list|join:", "|default:"—" }} · {{ offering.classroom.name|default:"—" }}</div>
+            {% if offering.status == 'published' %}
+            <div class="seat-info{% if offering.enrolled >= offering.capacity %} is-full{% endif %}">
+              {% blocktranslate with enrolled=offering.enrolled capacity=offering.capacity %}Enrolled {{ enrolled }} / {{ capacity }}{% endblocktranslate %}
+              {% if offering.waiting %} · {% blocktranslate with count=offering.waiting %}Waitlist {{ count }}{% endblocktranslate %}{% endif %}
+            </div>
+            {% endif %}
           </div>
           <div class="row-actions">
             {% if offering.status == 'pending' %}
