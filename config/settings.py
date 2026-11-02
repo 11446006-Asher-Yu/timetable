@@ -98,6 +98,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+# 主鍵型態寫明，Django 6.1（預設 BigAutoField）與舊版 Python 用的 Django 5.2 才會一致，不會跳警告
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
