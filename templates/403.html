@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "No access" %} | {% translate "Online Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card auth-card">
+  <h1>{% translate "No access" %}</h1>
+  <p>{% translate "Your account doesn’t have permission to open this page. Scheduling pages are only for schedulers and teachers." %}</p>
+  <a href="{% url 'home' %}" class="button button-block">{% translate "Back to home" %}</a>
+</section>
+{% endblock %}

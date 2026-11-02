@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 import os
 from pathlib import Path
 
+import django
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,13 +27,21 @@ load_dotenv(BASE_DIR / '.env')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+# 沒有 .env（例如剛從 GitHub clone 下來）時自動進入本機開發模式，直接 runserver 就能用；
+# 正式環境的 .env 一定有 DJANGO_SECRET_KEY，行為不變。
+LOCAL_DEFAULTS = 'DJANGO_SECRET_KEY' not in os.environ
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True' if LOCAL_DEFAULTS else 'False') == 'True'
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-local-development-only')
+if LOCAL_DEFAULTS and not DEBUG:
+    raise ImproperlyConfigured('DJANGO_SECRET_KEY must be set in .env when DJANGO_DEBUG is False.')
 
 ALLOWED_HOSTS = [h for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if h]
+if LOCAL_DEFAULTS and not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 # 正式環境（DEBUG=False）走 HTTPS：表單送出要信任網站網址，Cookie 只走加密連線
 CSRF_TRUSTED_ORIGINS = [f'https://{h}' for h in ALLOWED_HOSTS if h not in ('127.0.0.1', 'localhost')]
@@ -185,6 +195,19 @@ else:
             'BACKEND': 'django.core.mail.backends.console.EmailBackend',
         },
     }
+
+if django.VERSION < (6, 1):
+    # 舊版 Python（3.10、3.11）只能裝 Django 5.2，沒有 MAILERS 設定，改用傳統的 EMAIL_* 設定
+    _mailer = MAILERS.pop('default')
+    del MAILERS
+    EMAIL_BACKEND = _mailer['BACKEND']
+    _options = _mailer.get('OPTIONS', {})
+    EMAIL_HOST = _options.get('host', 'localhost')
+    EMAIL_PORT = _options.get('port', 25)
+    EMAIL_HOST_USER = _options.get('username', '')
+    EMAIL_HOST_PASSWORD = _options.get('password', '')
+    EMAIL_USE_TLS = _options.get('use_tls', False)
+    EMAIL_TIMEOUT = _options.get('timeout')
 
 DEFAULT_FROM_EMAIL = f'Online Timetable <{EMAIL_ACCOUNT or "noreply@localhost"}>'
 

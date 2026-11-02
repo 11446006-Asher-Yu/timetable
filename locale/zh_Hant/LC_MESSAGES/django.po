@@ -372,6 +372,12 @@ msgstr "%(user)s 的分享連結"
 msgid "Page not found"
 msgstr "找不到這個頁面"
 
+msgid "No access"
+msgstr "沒有權限"
+
+msgid "Your account doesn’t have permission to open this page. Scheduling pages are only for schedulers and teachers."
+msgstr "你的帳號沒有權限開啟這個頁面。排課相關頁面只開放給排課人員和老師。"
+
 msgid "The address may be wrong, or this timetable is no longer shared."
 msgstr "網址可能打錯了，或是這份課表已經停止分享。"
 

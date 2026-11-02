@@ -314,6 +314,33 @@ class InvitationTests(SchedulingTestCase):
         self.assertRedirects(response, reverse('timetable'))
 
 
+class SeedDemoTests(TestCase):
+    def test_refuses_without_debug(self):
+        from django.core.management import CommandError, call_command
+
+        with self.assertRaises(CommandError):
+            call_command('seed_demo', stdout=None)  # 測試時 DEBUG=False
+
+    def test_creates_demo_data_and_can_run_twice(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        for _ in range(2):
+            call_command('seed_demo', force=True, stdout=StringIO())
+        student = User.objects.get(username='demo_student')
+        self.assertTrue(student.check_password('demo-pass-2026'))
+        self.assertEqual(student.courses.count(), 6)
+        self.assertTrue(User.objects.get(username='demo_scheduler').groups.filter(name=SCHEDULERS).exists())
+        self.assertTrue(User.objects.get(username='demo_teacher').groups.filter(name=TEACHERS).exists())
+        term = Term.objects.get(name='115-1')
+        self.assertEqual(term.offerings.count(), 8)
+        self.assertEqual(ChangeRequest.objects.filter(offering__term=term).count(), 1)
+
+        self.client.login(username='demo_student', password='demo-pass-2026')
+        self.assertContains(self.client.get(reverse('timetable')), '經濟學')
+
+
 class CatalogTests(SchedulingTestCase):
     def setUp(self):
         super().setUp()
