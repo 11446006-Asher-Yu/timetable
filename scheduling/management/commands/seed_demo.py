@@ -21,6 +21,7 @@ from scheduling.models import (
     SCHEDULERS, TEACHERS, AvailabilitySlot, ChangeRequest, ChangeRequestSlot, ClassGroup, Classroom, Offering,
     TeacherAvailability, TeacherInvitation, Term,
 )
+from scheduling.enrollment import add_to_timetable
 from scheduling.rules import cells_to_runs, check_schedule
 from scheduling.views import save_times
 
@@ -35,6 +36,9 @@ LOGIN_ACCOUNTS = [
 
 # 其他示範老師只用來排課，不能登入
 OTHER_TEACHERS = [('demo_lee', '李老師（示範）'), ('demo_chang', '張老師（示範）'), ('demo_chen', '陳老師（示範）')]
+
+# 已經加入「專題討論」、把名額坐滿的同學，不能登入
+CLASSMATES = ['demo_classmate1', 'demo_classmate2']
 
 # 學生的個人課表：(課名, 類別, 學分, 教室, 老師, [(星期, 起, 迄)])
 PERSONAL_COURSES = [
@@ -52,8 +56,10 @@ GROUPS = ['資管一甲', '資管二甲', '資管三甲']
 
 # 開課：(課名, 班級, 老師帳號, 學分, 類別, 節數, 教室類型, 人數, 時段, 教室, 狀態)
 OFFERINGS = [
-    ('程式設計（一）', '資管一甲', 'demo_teacher', 3, 'required', 3, 'computer', 40, [(2, 2), (2, 3), (2, 4)], '電腦教室 A', 'accepted'),
-    ('計算機概論', '資管一甲', 'demo_chang', 3, 'required', 3, 'general', 55, [(4, 2), (4, 3), (4, 4)], '六教 601', 'accepted'),
+    ('程式設計（一）', '資管一甲', 'demo_teacher', 3, 'required', 3, 'computer', 40, [(2, 2), (2, 3), (2, 4)], '電腦教室 A', 'published'),
+    ('計算機概論', '資管一甲', 'demo_chang', 3, 'required', 3, 'general', 55, [(4, 2), (4, 3), (4, 4)], '六教 601', 'published'),
+    # 名額只有 2 人且已額滿，用來示範候補與遞補
+    ('專題討論', '資管三甲', 'demo_chang', 2, 'elective', 2, 'general', 2, [(5, 6), (5, 7)], '五教 302', 'published'),
     ('資料結構', '資管二甲', 'demo_teacher', 3, 'required', 3, 'general', 55, [(3, 2), (3, 3), (3, 4)], '六教 602', 'pending'),
     ('統計學', '資管二甲', 'demo_lee', 3, 'required', 3, 'general', 55, [(2, 6), (2, 7), (2, 8)], '六教 601', 'change_requested'),
     ('資料庫系統', '資管三甲', 'demo_lee', 3, 'required', 3, 'computer', 40, [(4, 6), (4, 7), (4, 8)], '電腦教室 B', 'accepted'),
@@ -114,6 +120,13 @@ class Command(BaseCommand):
                 user.save()
             user.groups.add(groups[TEACHERS])
             users[username] = user
+        for username in CLASSMATES:
+            user, created = User.objects.get_or_create(username=username, defaults={'email': f'{username}@example.com'})
+            if created:
+                user.set_unusable_password()
+                user.save()
+            user.courses.all().delete()
+            users[username] = user
         return users
 
     # ===== 學生的個人課表 =====
@@ -137,7 +150,7 @@ class Command(BaseCommand):
         term, _ = Term.objects.update_or_create(name='115-1', defaults={
             'availability_open': True,
             'availability_deadline': timezone.localdate() + timedelta(days=7),
-            'published_at': None,
+            'published_at': timezone.now(),
         })
         rooms = {}
         for name, capacity, kind in ROOMS:
@@ -174,6 +187,12 @@ class Command(BaseCommand):
                 ChangeRequestSlot.objects.bulk_create(
                     [ChangeRequestSlot(request=change, weekday=4, period=p) for p in (2, 3, 4)]
                 )
+
+        # 已公布課程的加入狀態：專題討論被兩位同學坐滿；學生已加入計算機概論（示範正式課程鎖定時段）
+        published = {o.name: o for o in Offering.objects.filter(term=term, status=Offering.Status.PUBLISHED)}
+        for username in CLASSMATES:
+            add_to_timetable(users[username], published['專題討論'])
+        add_to_timetable(users['demo_student'], published['計算機概論'])
 
     def availability(self, teacher, term, unavailable=(), avoid=(), submitted=True):
         record, _ = TeacherAvailability.objects.get_or_create(teacher=teacher, term=term)

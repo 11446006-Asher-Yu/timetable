@@ -26,7 +26,7 @@
         <thead>
           <tr>
             <th>{% translate "Course" %}</th><th>{% translate "Class group" %}</th><th>{% translate "Teacher" %}</th>
-            <th>{% translate "Times" %}</th><th>{% translate "Classroom" %}</th><th>{% translate "Status" %}</th><th></th>
+            <th>{% translate "Times" %}</th><th>{% translate "Classroom" %}</th><th>{% translate "Enrolled" %}</th><th>{% translate "Status" %}</th><th></th>
           </tr>
         </thead>
         <tbody>
@@ -37,6 +37,10 @@
               <td>{{ offering.teacher.get_full_name|default:offering.teacher.username }}</td>
               <td>{% for time in offering.times.all %}{{ time }}{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="muted">—</span>{% endfor %}</td>
               <td>{{ offering.classroom.name|default:"—" }}</td>
+              <td class="{% if offering.enrolled >= offering.capacity %}seat-info is-full{% endif %}">
+                {{ offering.enrolled }} / {{ offering.capacity }}
+                {% if offering.waiting %}<div class="muted">{% blocktranslate with count=offering.waiting %}Waitlist {{ count }}{% endblocktranslate %}</div>{% endif %}
+              </td>
               <td>{% include 'scheduling/_status.html' %}</td>
               <td class="row-actions">
                 {% if offering.status != 'published' %}<a href="{% url 'scheduling:board' offering.pk %}">{% translate "Schedule" %}</a>{% endif %}

@@ -1215,3 +1215,77 @@ msgstr "老師邀請"
 
 msgid "teacher invitations"
 msgstr "老師邀請"
+
+# ===== 名額、候補與遞補 =====
+msgid "Full"
+msgstr "已額滿"
+
+msgid "Enrolled"
+msgstr "已加入"
+
+msgid "Enrolled %(enrolled)s / %(capacity)s"
+msgstr "已加入 %(enrolled)s／%(capacity)s"
+
+msgid "Join waitlist"
+msgstr "加入候補"
+
+msgid "Leave waitlist"
+msgstr "取消候補"
+
+msgid "Waitlist #%(position)s"
+msgstr "候補第 %(position)s 位"
+
+msgid "Waitlist %(count)s"
+msgstr "候補 %(count)s 人"
+
+msgid "This course still has seats. Add it directly."
+msgstr "這門課還有名額，請直接加入。"
+
+msgid "You joined the waitlist for “%(name)s” (#%(position)s)."
+msgstr "已加入「%(name)s」的候補（第 %(position)s 位）。"
+
+msgid "You left the waitlist for “%(name)s”."
+msgstr "已取消「%(name)s」的候補。"
+
+msgid "“%(name)s” is full. You can join the waitlist instead."
+msgstr "「%(name)s」已額滿，可以改為加入候補。"
+
+msgid "%(count)s student moved up from the waitlist."
+msgid_plural "%(count)s students moved up from the waitlist."
+msgstr[0] "已有 %(count)s 位候補學生遞補。"
+
+msgid "This is an official course. Your seat will be released and may go to the next student on the waitlist."
+msgstr "這是正式課程，刪除後會釋出你的名額，可能由候補的同學遞補。"
+
+msgid "You got a seat in %(course)s"
+msgstr "你已遞補上「%(course)s」"
+
+msgid "A seat opened up in “%(course)s” and you were next on the waitlist. The course has been added to your timetable.\n\n%(link)s"
+msgstr "「%(course)s」有名額空出，你是候補第一位，這門課已經加入你的課表。\n\n%(link)s"
+
+msgid "These scheduled courses need more seats: %(courses)s"
+msgstr "以下已排在這間教室的課需要更多座位：%(courses)s"
+
+msgid "These scheduled courses need the current classroom type: %(courses)s"
+msgstr "以下已排在這間教室的課需要目前的教室類型：%(courses)s"
+
+msgid "%(room)s holds only %(seats)s. Choose another classroom first."
+msgstr "%(room)s 只能容納 %(seats)s 人，請先改排其他教室。"
+
+msgid "This course is scheduled in %(room)s. Choose another classroom first."
+msgstr "這門課排在 %(room)s，請先改排其他教室。"
+
+msgid "%(count)s students have already added this course."
+msgstr "已有 %(count)s 位學生加入這門課，人數上限不能低於這個數字。"
+
+msgid "Not published: %(problem)s"
+msgstr "未公布：%(problem)s"
+
+msgid "joined at"
+msgstr "加入時間"
+
+msgid "waitlist entry"
+msgstr "候補紀錄"
+
+msgid "waitlist"
+msgstr "候補名單"

@@ -14,13 +14,13 @@ from django.views.decorators.http import require_POST
 from schedule.conflicts import find_conflicts
 from schedule.models import Course, CourseTime, Period
 
-from . import emails
+from . import emails, enrollment
 from .forms import (
     ChangeRequestForm, ClassGroupForm, ClassroomForm, DeclineForm, InvitationForm, OfferingForm, TermForm,
 )
 from .models import (
     TEACHERS, AvailabilitySlot, ChangeRequest, ChangeRequestSlot, ClassGroup, Classroom, Offering, OfferingTime,
-    TeacherAvailability, TeacherInvitation, Term, default_expiry,
+    TeacherAvailability, TeacherInvitation, Term, WaitlistEntry, default_expiry,
 )
 from .roles import display_name, scheduler_required, teacher_required
 from .rules import availability_map, busy_cells, cells_to_runs, check_schedule, free_classrooms, runs_of
@@ -187,7 +187,11 @@ def term_availability(request, pk):
 @scheduler_required
 def offering_list(request):
     term = current_term(request)
-    offerings = offerings_for(term) if term else Offering.objects.none()
+    offerings = (
+        offerings_for(term).annotate(enrolled=Count('student_courses', distinct=True),
+                                     waiting=Count('waitlist', distinct=True))
+        if term else Offering.objects.none()
+    )
     return render(request, 'scheduling/offering_list.html', {
         'term': term, 'terms': Term.objects.all(), 'offerings': offerings,
         'sendable': [o for o in offerings if o.status == Offering.Status.DRAFT and o.classroom_id and o.times.all()],
@@ -202,6 +206,12 @@ def offering_edit(request, pk=None):
     if request.method == 'POST' and form.is_valid():
         offering = form.save()
         messages.success(request, gettext('Saved “%(name)s”.') % {'name': offering.name})
+        # 調高人數上限後有空位，候補自動遞補
+        promoted = enrollment.promote(offering, absolute(request, 'timetable'))
+        if promoted:
+            messages.success(request, ngettext(
+                '%(count)s student moved up from the waitlist.', '%(count)s students moved up from the waitlist.',
+                len(promoted)) % {'count': len(promoted)})
         if pk is None:
             return redirect('scheduling:board', pk=offering.pk)
         return redirect('scheduling:offerings')
@@ -420,16 +430,30 @@ def publish(request):
                                          status=Offering.Status.PUBLISHED)
             offering.status = Offering.Status.DRAFT
             offering.save(update_fields=['status', 'updated_at'])
-            # 已加入的學生課程解除連結，學生可以自行修改或刪除
+            # 已加入的學生課程解除連結，學生可以自行修改或刪除；候補名單清空
             offering.student_courses.update(offering=None)
+            offering.waitlist.all().delete()
             messages.success(request, gettext('Unpublished “%(name)s”.') % {'name': offering.name})
         else:
-            accepted = offerings.filter(status=Offering.Status.ACCEPTED)
-            count = accepted.update(status=Offering.Status.PUBLISHED)
-            term.published_at = term.published_at or timezone.now()
-            term.save(update_fields=['published_at'])
-            emails.published(term, absolute(request, 'scheduling:teaching'))
+            # 公布前每門課再跑一次排課規則（含教室容量），不通過的留在「已確認」並說明原因
+            ready, problems = [], []
+            for offering in offerings.filter(status=Offering.Status.ACCEPTED):
+                result = check_schedule(offering, runs_of(offering), offering.classroom)
+                errors = [message for _code, message in result.errors]
+                if offering.classroom is None:
+                    errors.append(gettext('Select a classroom.'))
+                if errors:
+                    problems.append(f'{offering.name}：{errors[0]}')
+                else:
+                    ready.append(offering.pk)
+            count = Offering.objects.filter(pk__in=ready).update(status=Offering.Status.PUBLISHED)
+            if count:
+                term.published_at = term.published_at or timezone.now()
+                term.save(update_fields=['published_at'])
+                emails.published(term, absolute(request, 'scheduling:teaching'))
             messages.success(request, ngettext('Published %(count)s offering.', 'Published %(count)s offerings.', count) % {'count': count})
+            for problem in problems:
+                messages.error(request, gettext('Not published: %(problem)s') % {'problem': problem})
         return redirect('scheduling:publish')
     groups = {value: [] for value, _label in Offering.Status.choices}
     for offering in offerings:
@@ -576,6 +600,7 @@ def request_change(request, pk):
     return render(request, 'scheduling/request_change.html', {'offering': offering, 'form': form, 'grid': grid})
 
 
+
 # ===== 學生：課程目錄 =====
 
 @login_required
@@ -600,20 +625,44 @@ def catalog(request):
     conflicts, conflict_offering = [], None
     if request.method == 'POST':
         offering = get_object_or_404(Offering, pk=request.POST.get('offering'), status=Offering.Status.PUBLISHED)
+        action = request.POST.get('action', 'add')
+        if action == 'waitlist':
+            if offering.seats_left > 0 or request.user.courses.filter(offering=offering).exists():
+                messages.error(request, gettext('This course still has seats. Add it directly.'))
+            else:
+                entry = enrollment.join_waitlist(request.user, offering)
+                messages.success(request, gettext('You joined the waitlist for “%(name)s” (#%(position)s).')
+                                 % {'name': offering.name, 'position': entry.position})
+            return redirect(request.get_full_path())
+        if action == 'leave_waitlist':
+            enrollment.leave_waitlist(request.user, offering)
+            messages.success(request, gettext('You left the waitlist for “%(name)s”.') % {'name': offering.name})
+            return redirect(request.get_full_path())
         if request.user.courses.filter(offering=offering).exists():
             return redirect(request.get_full_path())
         conflicts = find_conflicts(request.user, runs_of(offering))
         if conflicts and not request.POST.get('allow_conflict'):
             conflict_offering = offering
         else:
-            add_to_timetable(request.user, offering)
-            messages.success(request, gettext('Added “%(name)s”.') % {'name': offering.name})
+            try:
+                enrollment.enroll(request.user, offering)
+            except enrollment.CourseFull:
+                messages.error(request, gettext('“%(name)s” is full. You can join the waitlist instead.')
+                               % {'name': offering.name})
+            else:
+                messages.success(request, gettext('Added “%(name)s”.') % {'name': offering.name})
             return redirect(request.get_full_path())
 
-    offerings = list(offerings)
+    offerings = list(offerings.annotate(enrolled=Count('student_courses', distinct=True)))
+    waitlist = {
+        entry.offering_id: entry.position
+        for entry in WaitlistEntry.objects.filter(student=request.user, offering__in=offerings).select_related('offering')
+    }
     for offering in offerings:
         offering.teacher_name = display_name(offering.teacher)
         offering.color = Course.CATEGORY_COLORS[offering.category]
+        offering.is_full = offering.enrolled >= offering.capacity
+        offering.waitlist_position = waitlist.get(offering.pk)
     added = set(request.user.courses.filter(offering__isnull=False).values_list('offering_id', flat=True))
     return render(request, 'scheduling/catalog.html', {
         'term': term,
@@ -625,17 +674,3 @@ def catalog(request):
         'query': query, 'group_id': group_id, 'category': category,
         'conflicts': conflicts, 'conflict_offering': conflict_offering,
     })
-
-
-def add_to_timetable(user, offering):
-    with transaction.atomic():
-        course = Course.objects.create(
-            owner=user, offering=offering, name=offering.name, teacher=display_name(offering.teacher),
-            classroom=offering.classroom.name if offering.classroom else '', credits=offering.credits,
-            category=offering.category,
-        )
-        CourseTime.objects.bulk_create([
-            CourseTime(course=course, weekday=t.weekday, start_period=t.start_period, end_period=t.end_period)
-            for t in offering.times.all()
-        ])
-    return course

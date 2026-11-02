@@ -92,6 +92,14 @@ def request_resolved(change, link):
     ))
 
 
+def waitlist_promoted(student, offering, link):
+    _send([student.email], lambda: (
+        gettext('You got a seat in %(course)s') % {'course': offering.name},
+        gettext('A seat opened up in “%(course)s” and you were next on the waitlist. '
+                'The course has been added to your timetable.\n\n%(link)s') % {'course': offering.name, 'link': link},
+    ))
+
+
 def published(term, link):
     _send(_emails_of(TEACHERS), lambda: (
         gettext('The %(term)s timetable is published') % {'term': term.name},

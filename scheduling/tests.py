@@ -335,6 +335,138 @@ class InvitationTests(SchedulingTestCase):
         self.assertRedirects(response, reverse('timetable'))
 
 
+class CapacityTests(SchedulingTestCase):
+    """A：事後修改與公布前的容量檢查。"""
+
+    def offering_post(self, offering, **changes):
+        data = {
+            'term': offering.term_id, 'name': offering.name, 'credits': offering.credits, 'category': offering.category,
+            'class_group': offering.class_group_id, 'teacher': offering.teacher_id,
+            'periods_per_week': offering.periods_per_week, 'room_kind': offering.room_kind, 'capacity': offering.capacity,
+        }
+        data.update(changes)
+        return self.client.post(reverse('scheduling:offering_edit', args=[offering.pk]), data)
+
+    def test_offering_capacity_cannot_exceed_scheduled_room(self):
+        offering = self.place(self.offering(), {(2, 1), (2, 2), (2, 3)}, self.room)  # 六教 601 容量 60
+        self.client.force_login(self.scheduler)
+        response = self.offering_post(offering, capacity=80)
+        self.assertContains(response, 'holds only 60')
+        offering.refresh_from_db()
+        self.assertEqual(offering.capacity, 50)
+
+    def test_offering_capacity_cannot_drop_below_enrolled(self):
+        offering = self.place(self.offering(capacity=3), {(2, 1), (2, 2), (2, 3)}, self.room, Offering.Status.PUBLISHED)
+        for name in ('s1', 's2'):
+            Course.objects.create(owner=self.make_user(name), name=offering.name, offering=offering)
+        self.client.force_login(self.scheduler)
+        self.assertContains(self.offering_post(offering, capacity=1), '2 students have already added')
+
+    def test_classroom_cannot_shrink_below_scheduled_course(self):
+        self.place(self.offering(), {(2, 1), (2, 2), (2, 3)}, self.room)
+        self.client.force_login(self.scheduler)
+        response = self.client.post(reverse('scheduling:manage_edit', args=['classrooms', self.room.pk]),
+                                    {'name': self.room.name, 'capacity': 30, 'kind': 'general'})
+        self.assertContains(response, 'need more seats')
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.capacity, 60)
+
+    def test_publish_skips_offerings_that_break_rules(self):
+        good = self.place(self.offering(), {(2, 1), (2, 2), (2, 3)}, self.room, Offering.Status.ACCEPTED)
+        bad = self.place(self.offering('大班課', teacher=self.teacher2, group=self.group2), {(3, 1), (3, 2), (3, 3)},
+                         self.room2, Offering.Status.ACCEPTED)
+        Classroom.objects.filter(pk=self.room2.pk).update(capacity=10)  # 繞過表單，模擬資料已不一致
+        self.client.force_login(self.scheduler)
+        response = self.client.post(reverse('scheduling:publish'), {'action': 'publish'}, follow=True)
+        good.refresh_from_db()
+        bad.refresh_from_db()
+        self.assertEqual(good.status, Offering.Status.PUBLISHED)
+        self.assertEqual(bad.status, Offering.Status.ACCEPTED)
+        self.assertContains(response, 'Not published: 大班課')
+
+
+class SeatsAndWaitlistTests(SchedulingTestCase):
+    """B：名額顯示與額滿；C：候補與自動遞補。"""
+
+    def setUp(self):
+        super().setUp()
+        self.term.published_at = timezone.now()
+        self.term.save()
+        self.seminar = self.place(self.offering('專題討論', capacity=1), {(2, 1), (2, 2), (2, 3)}, self.room,
+                                  Offering.Status.PUBLISHED)
+        self.first = self.make_user('first')
+        self.second = self.make_user('second')
+        self.third = self.make_user('third')
+
+    def catalog_post(self, user, action='add'):
+        self.client.force_login(user)
+        return self.client.post(reverse('scheduling:catalog'), {'offering': self.seminar.pk, 'action': action},
+                                follow=True)
+
+    def test_catalog_shows_seats_and_blocks_when_full(self):
+        self.catalog_post(self.first)
+        response = self.catalog_post(self.second)
+        self.assertContains(response, 'is full')
+        self.assertContains(response, 'Enrolled 1 / 1')
+        self.assertContains(response, 'Join waitlist')
+        self.assertFalse(Course.objects.filter(owner=self.second, offering=self.seminar).exists())
+
+    def test_waitlist_positions_and_leave(self):
+        self.catalog_post(self.first)
+        self.catalog_post(self.second, 'waitlist')
+        response = self.catalog_post(self.third, 'waitlist')
+        self.assertContains(response, 'Waitlist #2')
+        self.catalog_post(self.second, 'leave_waitlist')
+        self.client.force_login(self.third)
+        self.assertContains(self.client.get(reverse('scheduling:catalog')), 'Waitlist #1')
+
+    def test_cannot_waitlist_when_seats_left(self):
+        response = self.catalog_post(self.first, 'waitlist')
+        self.assertContains(response, 'still has seats')
+        self.assertFalse(self.seminar.waitlist.exists())
+
+    def test_dropping_promotes_first_on_waitlist(self):
+        self.catalog_post(self.first)
+        self.catalog_post(self.second, 'waitlist')
+        self.catalog_post(self.third, 'waitlist')
+        course = Course.objects.get(owner=self.first, offering=self.seminar)
+        self.client.force_login(self.first)
+        self.client.post(reverse('course_delete', args=[course.pk]))
+        self.assertTrue(Course.objects.filter(owner=self.second, offering=self.seminar).exists())
+        self.assertFalse(Course.objects.filter(owner=self.third, offering=self.seminar).exists())
+        self.assertEqual(list(self.seminar.waitlist.values_list('student__username', flat=True)), ['third'])
+        self.assertIn('You got a seat', mail.outbox[-1].subject)
+
+    def test_raising_capacity_promotes_waitlist(self):
+        self.catalog_post(self.first)
+        self.catalog_post(self.second, 'waitlist')
+        self.catalog_post(self.third, 'waitlist')
+        self.client.force_login(self.scheduler)
+        data = {
+            'term': self.term.pk, 'name': '專題討論', 'credits': 3, 'category': 'required',
+            'class_group': self.group.pk, 'teacher': self.teacher.pk, 'periods_per_week': 3,
+            'room_kind': 'general', 'capacity': 3,
+        }
+        self.client.post(reverse('scheduling:offering_edit', args=[self.seminar.pk]), data)
+        self.assertEqual(self.seminar.enrolled_count, 3)
+        self.assertFalse(self.seminar.waitlist.exists())
+
+    def test_unpublish_clears_waitlist(self):
+        self.catalog_post(self.first)
+        self.catalog_post(self.second, 'waitlist')
+        self.client.force_login(self.scheduler)
+        self.client.post(reverse('scheduling:publish'), {'action': 'unpublish', 'offering': self.seminar.pk})
+        self.assertFalse(self.seminar.waitlist.exists())
+
+    def test_offering_list_shows_enrolled_and_waitlist(self):
+        self.catalog_post(self.first)
+        self.catalog_post(self.second, 'waitlist')
+        self.client.force_login(self.scheduler)
+        response = self.client.get(reverse('scheduling:offerings'))
+        self.assertContains(response, '1 / 1')
+        self.assertContains(response, 'Waitlist 1')
+
+
 class SeedDemoTests(TestCase):
     def test_refuses_without_debug(self):
         from django.core.management import CommandError, call_command
@@ -351,11 +483,14 @@ class SeedDemoTests(TestCase):
             call_command('seed_demo', force=True, stdout=StringIO())
         student = User.objects.get(username='demo_student')
         self.assertTrue(student.check_password('demo-pass-2026'))
-        self.assertEqual(student.courses.count(), 6)
+        self.assertEqual(student.courses.count(), 7)  # 6 門自己新增＋1 門正式課程
+        self.assertEqual(student.courses.filter(offering__isnull=False).count(), 1)
         self.assertTrue(User.objects.get(username='demo_scheduler').groups.filter(name=SCHEDULERS).exists())
         self.assertTrue(User.objects.get(username='demo_teacher').groups.filter(name=TEACHERS).exists())
         term = Term.objects.get(name='115-1')
-        self.assertEqual(term.offerings.count(), 8)
+        self.assertEqual(term.offerings.count(), 9)
+        self.assertEqual(term.offerings.filter(status=Offering.Status.PUBLISHED).count(), 3)
+        self.assertEqual(term.offerings.get(name='專題討論').seats_left, 0)  # 已額滿，可示範候補
         self.assertEqual(ChangeRequest.objects.filter(offering__term=term).count(), 1)
 
         self.client.login(username='demo_student', password='demo-pass-2026')

@@ -7,6 +7,9 @@
 <section class="card auth-card">
   <h1>{% translate "Delete course" %}</h1>
   <p>{% blocktranslate with name=course.name %}Delete “<strong>{{ name }}</strong>”? All of its class times will be deleted too, and this can’t be undone.{% endblocktranslate %}</p>
+  {% if course.offering_id %}
+    <p class="conflict-notice">{% translate "This is an official course. Your seat will be released and may go to the next student on the waitlist." %}</p>
+  {% endif %}
   <form method="post" class="form-actions">
     {% csrf_token %}
     <a href="{% url 'timetable' %}" class="button button-outline">{% translate "Cancel" %}</a>

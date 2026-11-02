@@ -1356,6 +1356,33 @@ a {
   margin: 0 0 4px;
 }
 
+/* 名額與候補 */
+.seat-info {
+  margin-top: 2px;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.seat-info.is-full {
+  color: var(--color-error);
+}
+
+.full-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--color-error);
+  color: #FFFFFF;
+  font-size: 0.75rem;
+}
+
+.waitlist-mark {
+  color: #9A6700;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .added-mark {
   color: #1A7F37;
   font-weight: 600;

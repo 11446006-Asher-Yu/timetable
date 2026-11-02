@@ -123,6 +123,15 @@ class Offering(models.Model):
     def time_list(self):
         return [str(time) for time in self.times.all()]
 
+    @property
+    def enrolled_count(self):
+        """已加入（從課程目錄加進個人課表）的學生數。"""
+        return self.student_courses.count()
+
+    @property
+    def seats_left(self):
+        return max(self.capacity - self.enrolled_count, 0)
+
 
 class OfferingTime(models.Model):
     offering = models.ForeignKey(Offering, on_delete=models.CASCADE, related_name='times')
@@ -198,6 +207,26 @@ class ChangeRequestSlot(models.Model):
     request = models.ForeignKey(ChangeRequest, on_delete=models.CASCADE, related_name='slots')
     weekday = models.PositiveSmallIntegerField(choices=CourseTime.Weekday.choices)
     period = models.PositiveSmallIntegerField()
+
+
+class WaitlistEntry(models.Model):
+    """額滿課程的候補名單，依加入時間排序；有名額時由第一位自動遞補。"""
+
+    offering = models.ForeignKey(Offering, on_delete=models.CASCADE, related_name='waitlist')
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='waitlist_entries')
+    created_at = models.DateTimeField(_('joined at'), auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at', 'pk']
+        constraints = [models.UniqueConstraint(fields=['offering', 'student'], name='one_waitlist_entry')]
+        verbose_name = _('waitlist entry')
+        verbose_name_plural = _('waitlist')
+
+    @property
+    def position(self):
+        return self.offering.waitlist.filter(
+            models.Q(created_at__lt=self.created_at) | models.Q(created_at=self.created_at, pk__lt=self.pk)
+        ).count() + 1
 
 
 def default_expiry():

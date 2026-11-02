@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext
 
+from scheduling import enrollment
 from scheduling.roles import home_url_name
 
 from .conflicts import assign_lanes, find_conflicts
@@ -252,8 +253,11 @@ def course_update(request, pk):
 def course_delete(request, pk):
     course = get_object_or_404(Course, pk=pk, owner=request.user)
     if request.method == 'POST':
-        name = course.name
+        name, offering = course.name, course.offering
         course.delete()
         messages.success(request, gettext('Deleted “%(name)s”.') % {'name': name})
+        # 刪掉正式課程＝退選，空出的名額讓候補第一位遞補
+        if offering is not None:
+            enrollment.promote(offering, request.build_absolute_uri(reverse('timetable')))
         return redirect('timetable')
     return render(request, 'schedule/course_confirm_delete.html', {'course': course})

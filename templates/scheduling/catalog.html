@@ -49,10 +49,30 @@
               <div class="muted">
                 {{ offering.teacher_name }} · {{ offering.class_group }} · {{ offering.time_list|join:", " }} · {{ offering.classroom.name|default:"—" }}
               </div>
+              <div class="seat-info{% if offering.is_full %} is-full{% endif %}">
+                {% blocktranslate with enrolled=offering.enrolled capacity=offering.capacity %}Enrolled {{ enrolled }} / {{ capacity }}{% endblocktranslate %}
+                {% if offering.is_full %}<span class="full-badge">{% translate "Full" %}</span>{% endif %}
+              </div>
             </div>
             <div class="course-actions">
               {% if offering.pk in added %}
                 <span class="added-mark">✓ {% translate "In my timetable" %}</span>
+              {% elif offering.waitlist_position %}
+                {# 已在候補名單：顯示順位，可以取消 #}
+                <span class="waitlist-mark">{% blocktranslate with position=offering.waitlist_position %}Waitlist #{{ position }}{% endblocktranslate %}</span>
+                <form method="post" class="inline-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="offering" value="{{ offering.pk }}">
+                  <input type="hidden" name="action" value="leave_waitlist">
+                  <button type="submit" class="link-button danger-link">{% translate "Leave waitlist" %}</button>
+                </form>
+              {% elif offering.is_full %}
+                <form method="post" class="inline-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="offering" value="{{ offering.pk }}">
+                  <input type="hidden" name="action" value="waitlist">
+                  <button type="submit" class="button button-small button-outline">{% translate "Join waitlist" %}</button>
+                </form>
               {% else %}
                 <form method="post" class="inline-form">
                   {% csrf_token %}
