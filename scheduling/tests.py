@@ -79,13 +79,34 @@ class RoleTests(SchedulingTestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn(reverse('login'), response['Location'])
 
+    def nav_links(self, user):
+        import re
+
+        self.client.force_login(user)
+        html = self.client.get(reverse('timetable')).content.decode()
+        nav = re.search(r'<nav class="site-nav">(.*?)</nav>', html, re.S).group(1)
+        return set(re.findall(r'<a href="([^"]+)"', nav))
+
     def test_nav_links_follow_roles(self):
+        # 排課人員、老師只看到自己的工作頁；學生看到課程目錄與我的課表
+        self.assertEqual(self.nav_links(self.scheduler), {reverse('scheduling:dashboard')})
+        self.assertEqual(self.nav_links(self.teacher), {reverse('scheduling:teacher_home')})
+        self.assertEqual(self.nav_links(self.student), {reverse('scheduling:catalog'), reverse('timetable')})
+
+    def test_login_lands_on_role_home(self):
+        for user, target in [(self.scheduler, 'scheduling:dashboard'),
+                             (self.teacher, 'scheduling:teacher_home'),
+                             (self.student, 'timetable')]:
+            self.client.logout()
+            response = self.client.post(reverse('login'), {'username': user.username, 'password': 'pw-12345678'},
+                                        follow=True)
+            self.assertRedirects(response, reverse(target), msg_prefix=user.username)
+
+    def test_hidden_pages_still_open_by_url(self):
+        # 只是隱藏選單，排課人員仍可自行輸入網址使用個人課表與課程目錄
         self.client.force_login(self.scheduler)
-        response = self.client.get(reverse('timetable'))
-        self.assertContains(response, reverse('scheduling:dashboard'))
-        self.assertNotContains(response, reverse('scheduling:teacher_home'))
-        self.client.force_login(self.student)
-        self.assertNotContains(self.client.get(reverse('timetable')), reverse('scheduling:dashboard'))
+        self.assertEqual(self.client.get(reverse('timetable')).status_code, 200)
+        self.assertEqual(self.client.get(reverse('scheduling:catalog')).status_code, 200)
 
     def test_teacher_cannot_touch_other_teachers_offering(self):
         offering = self.place(self.offering(teacher=self.teacher2), {(1, 1), (1, 2), (1, 3)}, self.room,

@@ -132,7 +132,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'timetable'
+# 登入後先到首頁，再依角色轉到我的課表、排課總覽或老師首頁
+LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 
 

@@ -31,6 +31,15 @@ def display_name(user):
     return user.get_full_name() or user.get_username()
 
 
+def home_url_name(user):
+    """登入後的首頁：排課人員到排課總覽、老師到老師首頁，其他人（學生）到我的課表。"""
+    if is_scheduler(user):
+        return 'scheduling:dashboard'
+    if is_teacher(user):
+        return 'scheduling:teacher_home'
+    return 'timetable'
+
+
 def _role_required(check):
     def decorator(view):
         @login_required
@@ -51,4 +60,6 @@ def roles(request):
     user = getattr(request, 'user', None)
     if user is None:
         return {}
-    return {'is_scheduler': is_scheduler(user), 'is_teacher': is_teacher(user)}
+    scheduler, teacher = is_scheduler(user), is_teacher(user)
+    # 排課人員、老師的選單只顯示自己的工作頁；個人課表與課程目錄仍可從網址進入
+    return {'is_scheduler': scheduler, 'is_teacher': teacher, 'is_staff_role': scheduler or teacher}

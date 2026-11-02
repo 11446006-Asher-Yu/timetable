@@ -83,8 +83,9 @@ class AuthTests(TestCase):
     def test_login_and_logout(self):
         get_user_model().objects.create_user('student', password=self.password)
         response = self.client.post(
-            reverse('login'), {'username': 'student', 'password': self.password}
+            reverse('login'), {'username': 'student', 'password': self.password}, follow=True
         )
+        # 登入後先到首頁，學生再被轉到我的課表
         self.assertRedirects(response, reverse('timetable'))
         response = self.client.post(reverse('logout'))
         self.assertRedirects(response, reverse('home'))

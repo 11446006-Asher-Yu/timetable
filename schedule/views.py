@@ -8,14 +8,17 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext
 
+from scheduling.roles import home_url_name
+
 from .conflicts import assign_lanes, find_conflicts
 from .forms import CourseForm, CourseTimeFormSet, OfficialCourseForm, SignUpForm
 from .models import Course, CourseTime, Period, ShareLink
 
 
 def home(request):
+    # 已登入就依角色進入各自的首頁（登入後也會先經過這裡，見 LOGIN_REDIRECT_URL）
     if request.user.is_authenticated:
-        return redirect('timetable')
+        return redirect(home_url_name(request.user))
     return render(request, 'home.html')
 
 
