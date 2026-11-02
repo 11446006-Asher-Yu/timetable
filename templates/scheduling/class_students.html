@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% blocktranslate with group=group.name %}{{ group }} students{% endblocktranslate %} | {% translate "Campus Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card">
+  <div class="page-heading">
+    <h1>{% blocktranslate with group=group.name %}{{ group }} students{% endblocktranslate %}</h1>
+    <span class="muted">{% blocktranslate count counter=students|length %}{{ counter }} student{% plural %}{{ counter }} students{% endblocktranslate %}</span>
+  </div>
+  {% if is_scheduler %}{% include 'scheduling/_scheduler_nav.html' with active='groups' %}{% endif %}
+
+  {% if students %}
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{% translate "Username" %}</th><th>{% translate "Name" %}</th><th>{% translate "Email" %}</th>
+            <th>{% if term %}{% blocktranslate with term=term.name %}Official courses ({{ term }}){% endblocktranslate %}{% else %}{% translate "Official courses" %}{% endif %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+            <tr>
+              <td>{{ student.username }}</td>
+              <td>{{ student.get_full_name|default:"—" }}</td>
+              <td>{% if student.email %}<a href="mailto:{{ student.email }}">{{ student.email }}</a>{% else %}—{% endif %}</td>
+              <td>{{ student.official }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">{% translate "No students in this class yet." %}</p>
+  {% endif %}
+
+  <p class="back-link">
+    {% if is_scheduler %}<a href="{% url 'scheduling:manage' 'groups' %}">← {% translate "Class groups" %}</a>
+    {% else %}<a href="{% url 'scheduling:teaching' %}">← {% translate "My classes" %}</a>{% endif %}
+  </p>
+</section>
+{% endblock %}

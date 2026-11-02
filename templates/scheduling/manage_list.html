@@ -16,7 +16,9 @@
             <li>
               <div>
                 <strong>{{ item.object }}</strong>
-                {% if item.detail %}<div class="muted">{{ item.detail }}</div>{% endif %}
+                {% if kind == 'groups' %}
+                  <div><a href="{% url 'scheduling:class_students' item.object.pk %}">{{ item.detail }}</a></div>
+                {% elif item.detail %}<div class="muted">{{ item.detail }}</div>{% endif %}
               </div>
               <div class="row-actions">
                 {% if kind == 'terms' %}

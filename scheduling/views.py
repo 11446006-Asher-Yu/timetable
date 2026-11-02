@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Count, ProtectedError, Q
 from django.http import JsonResponse
@@ -20,9 +21,9 @@ from .forms import (
 )
 from .models import (
     TEACHERS, AvailabilitySlot, ChangeRequest, ChangeRequestSlot, ClassGroup, Classroom, Offering, OfferingTime,
-    TeacherAvailability, TeacherInvitation, Term, WaitlistEntry, class_group_of, default_expiry,
+    TeacherAvailability, TeacherInvitation, Term, WaitlistEntry, class_group_of, default_expiry, default_term,
 )
-from .roles import display_name, scheduler_required, teacher_required
+from .roles import can_view_class, display_name, scheduler_required, teacher_required
 from .rules import availability_map, busy_cells, cells_to_runs, check_schedule, free_classrooms, runs_of
 
 # 排課只用週一到週五
@@ -602,6 +603,22 @@ def request_change(request, pk):
             cell['selected'] = (cell['weekday'], cell['period']) in cells
     return render(request, 'scheduling/request_change.html', {'offering': offering, 'form': form, 'grid': grid})
 
+
+
+# ===== 班級學生名單 =====
+
+@login_required
+def class_students(request, pk):
+    group = get_object_or_404(ClassGroup, pk=pk)
+    if not can_view_class(request.user, group):
+        raise PermissionDenied
+    term = default_term()
+    students = (
+        get_user_model().objects.filter(student_profile__class_group=group)
+        .annotate(official=Count('courses', filter=Q(courses__offering__isnull=False, courses__term=term)))
+        .order_by('username')
+    )
+    return render(request, 'scheduling/class_students.html', {'group': group, 'students': students, 'term': term})
 
 
 # ===== 學生：課程目錄 =====

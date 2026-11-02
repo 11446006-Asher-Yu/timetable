@@ -24,6 +24,8 @@ urlpatterns = [
     path('scheduler/requests/', views.requests_list, name='requests'),
     path('scheduler/requests/<int:pk>/resolve/', views.request_resolve, name='request_resolve'),
     path('scheduler/publish/', views.publish, name='publish'),
+    # 排課人員與教這個班的老師都能看
+    path('classes/<int:pk>/students/', views.class_students, name='class_students'),
     # 老師
     path('invite/<uuid:token>/', views.accept_invite, name='accept_invite'),
     path('teacher/', views.teacher_home, name='teacher_home'),

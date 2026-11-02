@@ -14,7 +14,8 @@ class SignUpForm(UserCreationForm):
 
     class Meta(UserCreationForm.Meta):
         model = get_user_model()
-        fields = ['username', 'email']
+        fields = ['username', 'first_name', 'email']
+        labels = {'first_name': _('Name')}
 
     class_group = forms.ModelChoiceField(
         ClassGroup.objects.all(), label=_('Class group'), empty_label=_('Select'), required=False,
@@ -23,6 +24,8 @@ class SignUpForm(UserCreationForm):
 
     def __init__(self, *args, require_class_group=True, **kwargs):
         super().__init__(*args, **kwargs)
+        # 姓名顯示在班級名單和老師名單上
+        self.fields['first_name'].required = True
         if not require_class_group:
             # 老師從邀請連結註冊，不需要班級
             del self.fields['class_group']
@@ -44,9 +47,23 @@ class SignUpForm(UserCreationForm):
 
 
 class ProfileForm(forms.ModelForm):
+    name = forms.CharField(label=_('Name'), max_length=150)
+
     class Meta:
         model = StudentProfile
         fields = ['class_group']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].initial = self.instance.user.first_name
+        self.order_fields(['name', 'class_group'])
+
+    def save(self, commit=True):
+        profile = super().save(commit)
+        user = profile.user
+        user.first_name = self.cleaned_data['name']
+        user.save(update_fields=['first_name'])
+        return profile
 
 
 class CourseForm(forms.ModelForm):

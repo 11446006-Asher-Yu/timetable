@@ -21,7 +21,7 @@
       {% for offering in offerings %}
         <li>
           <div>
-            <strong>{{ offering.name }}</strong> · {{ offering.class_group }} {% include 'scheduling/_status.html' %}
+            <strong>{{ offering.name }}</strong> · <a href="{% url 'scheduling:class_students' offering.class_group_id %}" title="{% translate 'Students' %}">{{ offering.class_group }}</a> {% include 'scheduling/_status.html' %}
             <div class="muted">{{ offering.time_list|join:", "|default:"—" }} · {{ offering.classroom.name|default:"—" }}</div>
             {% if offering.status == 'published' %}
             <div class="seat-info{% if offering.enrolled >= offering.capacity %} is-full{% endif %}">

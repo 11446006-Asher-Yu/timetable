@@ -184,7 +184,7 @@ class FlowTests(SchedulingTestCase):
         self.client.logout()
         accept_url = reverse('scheduling:accept_invite', args=[invite.token])
         response = self.client.post(reverse('signup') + f'?next={accept_url}', {
-            'username': 'chen', 'email': 'chen@example.com',
+            'username': 'chen', 'first_name': '陳老師', 'email': 'chen@example.com',
             'password1': 'Sch3dule-pass!', 'password2': 'Sch3dule-pass!', 'next': accept_url,
         })
         self.assertRedirects(response, accept_url)
@@ -331,7 +331,7 @@ class InvitationTests(SchedulingTestCase):
         response = self.client.post(reverse('signup'), {
             'username': 'newbie', 'email': 'newbie@example.com',
             'password1': 'Sch3dule-pass!', 'password2': 'Sch3dule-pass!', 'next': 'https://evil.example.com/',
-            'class_group': self.group.pk,
+            'class_group': self.group.pk, 'first_name': '新同學',
         })
         self.assertRedirects(response, reverse('timetable'))
 
@@ -557,7 +557,7 @@ class ClassGroupTests(SchedulingTestCase):
     """學生的班級：註冊時選、個人設定可改、課程目錄預設只顯示自己班、排課人員看得到班級人數。"""
 
     def signup(self, **extra):
-        data = {'username': 'newbie', 'email': 'newbie@example.com',
+        data = {'username': 'newbie', 'first_name': '新同學', 'email': 'newbie@example.com',
                 'password1': 'Sch3dule-pass!', 'password2': 'Sch3dule-pass!'}
         data.update(extra)
         return self.client.post(reverse('signup'), data)
@@ -579,8 +579,10 @@ class ClassGroupTests(SchedulingTestCase):
     def test_profile_changes_class_group(self):
         self.client.force_login(self.student)
         self.assertContains(self.client.get(reverse('profile')), 'Class group')
-        self.client.post(reverse('profile'), {'class_group': self.group2.pk})
+        self.client.post(reverse('profile'), {'name': '王小明', 'class_group': self.group2.pk})
         self.assertEqual(self.student.student_profile.class_group, self.group2)
+        self.student.refresh_from_db()
+        self.assertEqual(self.student.first_name, '王小明')
 
     def test_catalog_defaults_to_own_class(self):
         self.term.published_at = timezone.now()
@@ -684,3 +686,43 @@ class TermTimetableTests(SchedulingTestCase):
         self.client.force_login(self.scheduler)
         self.client.post(reverse('scheduling:manage_delete', args=['terms', self.previous.pk]))
         self.assertTrue(Term.objects.filter(pk=self.previous.pk).exists())
+
+
+class ClassStudentsTests(SchedulingTestCase):
+    """班級學生名單：排課人員與教這個班的老師看得到帳號、姓名、Email、本學期已加入的正式課程數。"""
+
+    def setUp(self):
+        super().setUp()
+        self.term.published_at = timezone.now()
+        self.term.save()
+        self.student.first_name = '陳同學'
+        self.student.save()
+        StudentProfile.objects.create(user=self.student, class_group=self.group)
+        self.published = self.place(self.offering(), {(2, 1)}, self.room, Offering.Status.PUBLISHED)
+        self.client.force_login(self.student)
+        self.client.post(reverse('scheduling:catalog'), {'offering': self.published.pk})
+        self.url = reverse('scheduling:class_students', args=[self.group.pk])
+
+    def test_scheduler_sees_roster_from_class_list(self):
+        self.client.force_login(self.scheduler)
+        self.assertContains(self.client.get(reverse('scheduling:manage', args=['groups'])), self.url)
+        response = self.client.get(self.url)
+        self.assertContains(response, 'student@example.com')
+        self.assertContains(response, '陳同學')
+        self.assertEqual(response.context['students'][0].official, 1)
+
+    def test_teacher_of_the_class_can_view(self):
+        self.client.force_login(self.teacher)
+        self.assertContains(self.client.get(reverse('scheduling:teaching')), self.url)
+        self.assertContains(self.client.get(self.url), 'student@example.com')
+
+    def test_other_teacher_and_students_cannot_view(self):
+        self.client.force_login(self.teacher2)
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+        self.client.force_login(self.student)
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+
+    def test_draft_offering_does_not_grant_access(self):
+        self.place(self.offering('統計學', teacher=self.teacher2, group=self.group2), {(3, 1)}, self.room2)
+        self.client.force_login(self.teacher2)
+        self.assertEqual(self.client.get(reverse('scheduling:class_students', args=[self.group2.pk])).status_code, 403)

@@ -29,7 +29,7 @@ DEMO_PASSWORD = 'demo-pass-2026'
 
 # 能登入的示範帳號：(帳號, 姓名, 角色)
 LOGIN_ACCOUNTS = [
-    ('demo_student', '', None),
+    ('demo_student', '陳同學（示範）', None),
     ('demo_scheduler', '排課人員（示範）', SCHEDULERS),
     ('demo_teacher', '王老師（示範）', TEACHERS),
 ]
@@ -38,7 +38,7 @@ LOGIN_ACCOUNTS = [
 OTHER_TEACHERS = [('demo_lee', '李老師（示範）'), ('demo_chang', '張老師（示範）'), ('demo_chen', '陳老師（示範）')]
 
 # 已經加入「專題討論」、把名額坐滿的同學，不能登入
-CLASSMATES = ['demo_classmate1', 'demo_classmate2']
+CLASSMATES = [('demo_classmate1', '林同學（示範）'), ('demo_classmate2', '張同學（示範）')]
 
 # 學生的班級：(帳號, 班級)
 STUDENT_GROUPS = [('demo_student', '資管一甲'), ('demo_classmate1', '資管三甲'), ('demo_classmate2', '資管三甲')]
@@ -138,11 +138,12 @@ class Command(BaseCommand):
                 user.save()
             user.groups.add(groups[TEACHERS])
             users[username] = user
-        for username in CLASSMATES:
+        for username, name in CLASSMATES:
             user, created = User.objects.get_or_create(username=username, defaults={'email': f'{username}@example.com'})
             if created:
                 user.set_unusable_password()
-                user.save()
+            user.first_name = name
+            user.save()
             user.courses.all().delete()
             users[username] = user
         return users
@@ -224,7 +225,7 @@ class Command(BaseCommand):
 
         # 已公布課程的加入狀態：專題討論被兩位同學坐滿；學生已加入計算機概論（示範正式課程鎖定時段）
         published = {o.name: o for o in Offering.objects.filter(term=term, status=Offering.Status.PUBLISHED)}
-        for username in CLASSMATES:
+        for username, _name in CLASSMATES:
             add_to_timetable(users[username], published['專題討論'])
         add_to_timetable(users['demo_student'], published['計算機概論'])
 

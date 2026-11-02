@@ -56,6 +56,7 @@ class AuthTests(TestCase):
     def signup(self, username='newbie', email='newbie@example.com'):
         return self.client.post(reverse('signup'), {
             'username': username,
+            'first_name': '測試同學',
             'email': email,
             'password1': self.password,
             'password2': self.password,

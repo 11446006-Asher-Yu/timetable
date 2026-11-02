@@ -1321,3 +1321,26 @@ msgstr "已儲存個人設定。"
 msgid "%(count)s student"
 msgid_plural "%(count)s students"
 msgstr[0] "%(count)s 位學生"
+
+# 班級學生名單
+msgid "Name"
+msgstr "姓名"
+
+msgid "Official courses"
+msgstr "已加入的正式課程"
+
+msgid "Official courses (%(term)s)"
+msgstr "已加入的正式課程（%(term)s）"
+
+msgid "No students in this class yet."
+msgstr "這個班級還沒有學生。"
+
+msgid "%(group)s students"
+msgstr "%(group)s 學生名單"
+
+msgid "%(counter)s student"
+msgid_plural "%(counter)s students"
+msgstr[0] "共 %(counter)s 位學生"
+
+msgid "Students"
+msgstr "學生名單"

@@ -5,7 +5,7 @@ from functools import wraps
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 
-from .models import SCHEDULERS, TEACHERS
+from .models import SCHEDULERS, TEACHERS, Offering
 
 
 def _in_group(user, name):
@@ -25,6 +25,15 @@ def is_scheduler(user):
 
 def is_teacher(user):
     return _in_group(user, TEACHERS)
+
+
+def can_view_class(user, group):
+    """班級學生名單：排課人員，以及有開課（不含草稿）教這個班的老師。"""
+    if is_scheduler(user):
+        return True
+    return is_teacher(user) and Offering.objects.filter(class_group=group, teacher=user).exclude(
+        status=Offering.Status.DRAFT
+    ).exists()
 
 
 def display_name(user):
