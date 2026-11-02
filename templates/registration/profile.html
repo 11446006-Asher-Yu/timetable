@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Settings" %} | {% translate "Campus Timetable" %}{% endblock %}
+
+{% block content %}
+<section class="card form-card">
+  <h1>{% translate "Settings" %}</h1>
+  <dl class="profile-info">
+    <dt>{% translate "Username" %}</dt><dd>{{ user.username }}</dd>
+    <dt>{% translate "Email" %}</dt><dd>{{ user.email|default:"—" }}</dd>
+  </dl>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include '_form_fields.html' %}
+    <div class="form-actions">
+      <button type="submit" class="button">{% translate "Save" %}</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

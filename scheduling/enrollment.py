@@ -19,7 +19,7 @@ class CourseFull(Exception):
 
 def add_to_timetable(user, offering):
     course = Course.objects.create(
-        owner=user, offering=offering, name=offering.name, teacher=display_name(offering.teacher),
+        owner=user, offering=offering, term=offering.term, name=offering.name, teacher=display_name(offering.teacher),
         classroom=offering.classroom.name if offering.classroom else '', credits=offering.credits,
         category=offering.category,
     )

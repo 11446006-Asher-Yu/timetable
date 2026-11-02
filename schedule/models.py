@@ -82,6 +82,15 @@ class Course(models.Model):
         related_name='student_courses',
         verbose_name=_('official course'),
     )
+    # 課程屬於哪個學期；還沒有任何學期時為空（見 scheduling.models.default_term）
+    term = models.ForeignKey(
+        'scheduling.Term',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='personal_courses',
+        verbose_name=_('term'),
+    )
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
 

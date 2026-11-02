@@ -7,7 +7,7 @@
 
 {# 匯出圖片與列印的範圍 #}
 <div id="export-area">
-  <h2 class="export-title">{% blocktranslate with name=owner.username %}{{ name }}’s timetable{% endblocktranslate %}</h2>
+  <h2 class="export-title">{% blocktranslate with name=owner.username %}{{ name }}’s timetable{% endblocktranslate %}{% if term %} · {{ term.name }}{% endif %}</h2>
 
   <div class="credit-summary">
     <span class="credit-total">{% translate "Total credits" %} <strong>{{ total_credits }}</strong></span>

@@ -27,6 +27,12 @@
       <button type="submit" class="button button-outline">{% translate "Search" %}</button>
     </form>
 
+    {% if own_group and group_id == own_group.pk|stringformat:'s' %}
+      <p class="muted catalog-hint">{% blocktranslate with group=own_group.name %}Showing courses for your class, {{ group }}. Choose “All class groups” to see everything.{% endblocktranslate %}</p>
+    {% elif not own_group %}
+      <p class="muted catalog-hint">{% translate "Set your class group in" %} <a href="{% url 'profile' %}">{% translate "Settings" %}</a> {% translate "to see your class’s courses first." %}</p>
+    {% endif %}
+
     {% if conflict_offering %}
       <form method="post" class="conflict-warning" role="alert">
         {% csrf_token %}

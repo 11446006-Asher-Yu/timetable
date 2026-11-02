@@ -3,6 +3,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.utils.translation import gettext_lazy as _
 
+from scheduling.models import ClassGroup, StudentProfile, Term
+
 from .models import Course, CourseTime, Period
 
 
@@ -14,21 +16,56 @@ class SignUpForm(UserCreationForm):
         model = get_user_model()
         fields = ['username', 'email']
 
+    class_group = forms.ModelChoiceField(
+        ClassGroup.objects.all(), label=_('Class group'), empty_label=_('Select'), required=False,
+        help_text=_('The catalog shows your class’s courses first. You can change it later.'),
+    )
+
+    def __init__(self, *args, require_class_group=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not require_class_group:
+            # 老師從邀請連結註冊，不需要班級
+            del self.fields['class_group']
+        else:
+            # 排課人員還沒建立任何班級時先不強制
+            self.fields['class_group'].required = ClassGroup.objects.exists()
+
     def clean_email(self):
         email = self.cleaned_data['email'].strip().lower()
         if get_user_model().objects.filter(email__iexact=email).exists():
             raise forms.ValidationError(_('This email is already registered.'))
         return email
 
+    def save(self, commit=True):
+        user = super().save(commit)
+        if commit and 'class_group' in self.fields:
+            StudentProfile.objects.create(user=user, class_group=self.cleaned_data.get('class_group'))
+        return user
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = StudentProfile
+        fields = ['class_group']
+
 
 class CourseForm(forms.ModelForm):
     class Meta:
         model = Course
-        fields = ['name', 'teacher', 'classroom', 'credits', 'category', 'color', 'note']
+        fields = ['term', 'name', 'teacher', 'classroom', 'credits', 'category', 'color', 'note']
         widgets = {
             'color': forms.TextInput(attrs={'placeholder': '#4F86C6'}),
             'note': forms.Textarea(attrs={'rows': 3}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if Term.objects.exists():
+            self.fields['term'].required = True
+            self.fields['term'].empty_label = None
+        else:
+            # 還沒有任何學期：不顯示學期欄位
+            del self.fields['term']
 
 
 class OfficialCourseForm(forms.ModelForm):

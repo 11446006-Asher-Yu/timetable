@@ -10,8 +10,8 @@ from django.utils import timezone
 from schedule.models import Course, CourseTime, Period
 
 from .models import (
-    SCHEDULERS, TEACHERS, AvailabilitySlot, ChangeRequest, ClassGroup, Classroom, Offering, TeacherAvailability,
-    TeacherInvitation, Term,
+    SCHEDULERS, TEACHERS, AvailabilitySlot, ChangeRequest, ClassGroup, Classroom, Offering, StudentProfile,
+    TeacherAvailability, TeacherInvitation, Term,
 )
 from .rules import cells_to_runs, check_schedule
 from .views import save_times
@@ -331,6 +331,7 @@ class InvitationTests(SchedulingTestCase):
         response = self.client.post(reverse('signup'), {
             'username': 'newbie', 'email': 'newbie@example.com',
             'password1': 'Sch3dule-pass!', 'password2': 'Sch3dule-pass!', 'next': 'https://evil.example.com/',
+            'class_group': self.group.pk,
         })
         self.assertRedirects(response, reverse('timetable'))
 
@@ -491,18 +492,23 @@ class SeedDemoTests(TestCase):
             call_command('seed_demo', force=True, stdout=StringIO())
         student = User.objects.get(username='demo_student')
         self.assertTrue(student.check_password('demo-pass-2026'))
-        self.assertEqual(student.courses.count(), 7)  # 6 門自己新增＋1 門正式課程
+        term, previous = Term.objects.get(name='115-1'), Term.objects.get(name='114-2')
+        self.assertEqual(student.courses.filter(term=term).count(), 7)  # 6 門自己新增＋1 門正式課程
+        self.assertEqual(student.courses.filter(term=previous).count(), 5)  # 上學期，示範切換學期
         self.assertEqual(student.courses.filter(offering__isnull=False).count(), 1)
+        self.assertEqual(student.student_profile.class_group.name, '資管一甲')
         self.assertTrue(User.objects.get(username='demo_scheduler').groups.filter(name=SCHEDULERS).exists())
         self.assertTrue(User.objects.get(username='demo_teacher').groups.filter(name=TEACHERS).exists())
-        term = Term.objects.get(name='115-1')
         self.assertEqual(term.offerings.count(), 9)
         self.assertEqual(term.offerings.filter(status=Offering.Status.PUBLISHED).count(), 3)
         self.assertEqual(term.offerings.get(name='專題討論').seats_left, 0)  # 已額滿，可示範候補
         self.assertEqual(ChangeRequest.objects.filter(offering__term=term).count(), 1)
 
         self.client.login(username='demo_student', password='demo-pass-2026')
-        self.assertContains(self.client.get(reverse('timetable')), '經濟學')
+        response = self.client.get(reverse('timetable'))
+        self.assertContains(response, '經濟學')
+        self.assertNotContains(response, '微積分（二）')
+        self.assertContains(self.client.get(reverse('timetable'), {'term': previous.pk}), '微積分（二）')
 
 
 class CatalogTests(SchedulingTestCase):
@@ -545,3 +551,136 @@ class CatalogTests(SchedulingTestCase):
         self.assertContains(response, '網頁程式設計')
         response = self.client.get(reverse('scheduling:catalog'), {'q': '不存在'})
         self.assertNotContains(response, '網頁程式設計</strong>')
+
+
+class ClassGroupTests(SchedulingTestCase):
+    """學生的班級：註冊時選、個人設定可改、課程目錄預設只顯示自己班、排課人員看得到班級人數。"""
+
+    def signup(self, **extra):
+        data = {'username': 'newbie', 'email': 'newbie@example.com',
+                'password1': 'Sch3dule-pass!', 'password2': 'Sch3dule-pass!'}
+        data.update(extra)
+        return self.client.post(reverse('signup'), data)
+
+    def test_signup_requires_class_group(self):
+        response = self.signup()
+        self.assertContains(response, 'This field is required')
+        self.assertFalse(User.objects.filter(username='newbie').exists())
+        self.signup(class_group=self.group.pk)
+        self.assertEqual(User.objects.get(username='newbie').student_profile.class_group, self.group)
+
+    def test_teacher_signup_from_invitation_skips_class_group(self):
+        invite = TeacherInvitation.objects.create(name='陳老師', email='newbie@example.com', invited_by=self.scheduler)
+        response = self.signup(next=reverse('scheduling:accept_invite', args=[invite.token]))
+        self.assertRedirects(response, reverse('scheduling:accept_invite', args=[invite.token]),
+                             fetch_redirect_response=False)
+        self.assertFalse(StudentProfile.objects.filter(user__username='newbie').exists())
+
+    def test_profile_changes_class_group(self):
+        self.client.force_login(self.student)
+        self.assertContains(self.client.get(reverse('profile')), 'Class group')
+        self.client.post(reverse('profile'), {'class_group': self.group2.pk})
+        self.assertEqual(self.student.student_profile.class_group, self.group2)
+
+    def test_catalog_defaults_to_own_class(self):
+        self.term.published_at = timezone.now()
+        self.term.save()
+        self.place(self.offering(), {(2, 1)}, self.room, Offering.Status.PUBLISHED)
+        self.place(self.offering('統計學', teacher=self.teacher2, group=self.group2), {(3, 1)}, self.room2,
+                   Offering.Status.PUBLISHED)
+        StudentProfile.objects.create(user=self.student, class_group=self.group2)
+        self.client.force_login(self.student)
+        response = self.client.get(reverse('scheduling:catalog'))
+        self.assertContains(response, '統計學')
+        self.assertNotContains(response, '網頁程式設計</strong>')
+        self.assertContains(response, 'Showing courses for your class')
+        response = self.client.get(reverse('scheduling:catalog'), {'group': ''})  # 所有班級
+        self.assertContains(response, '網頁程式設計</strong>')
+        self.assertContains(response, '統計學')
+
+    def test_scheduler_sees_student_count_per_class(self):
+        StudentProfile.objects.create(user=self.student, class_group=self.group)
+        StudentProfile.objects.create(user=self.make_user('other'), class_group=self.group)
+        self.client.force_login(self.scheduler)
+        response = self.client.get(reverse('scheduling:manage', args=['groups']))
+        self.assertContains(response, '2 students')
+        self.assertContains(response, '0 students')
+
+
+class TermTimetableTests(SchedulingTestCase):
+    """個人課表分學期：切換學期、新增到目前學期、衝堂只看同一學期。"""
+
+    def setUp(self):
+        super().setUp()
+        self.term.published_at = timezone.now()
+        self.term.save()
+        self.previous = Term.objects.create(name='114-2', published_at=timezone.now() - timedelta(days=180))
+        self.client.force_login(self.student)
+
+    def course(self, name, term, weekday=1, start=1, end=2):
+        course = Course.objects.create(owner=self.student, name=name, term=term, credits=3)
+        CourseTime.objects.create(course=course, weekday=weekday, start_period=Period.objects.get(number=start),
+                                  end_period=Period.objects.get(number=end))
+        return course
+
+    def test_shows_latest_published_term_by_default_and_can_switch(self):
+        self.course('經濟學', self.term)
+        self.course('微積分', self.previous)
+        response = self.client.get(reverse('timetable'))
+        self.assertContains(response, '經濟學')
+        self.assertNotContains(response, '微積分')
+        self.assertEqual(response.context['total_credits'], 3)
+        response = self.client.get(reverse('timetable'), {'term': self.previous.pk})
+        self.assertContains(response, '微積分')
+        self.assertNotContains(response, '經濟學')
+
+    def test_new_course_goes_to_selected_term(self):
+        url = reverse('course_create') + f'?term={self.previous.pk}'
+        response = self.client.post(url, {
+            'term': self.previous.pk, 'name': '英文', 'credits': 2, 'category': 'other',
+            'times-TOTAL_FORMS': 1, 'times-INITIAL_FORMS': 0, 'times-MIN_NUM_FORMS': 1, 'times-MAX_NUM_FORMS': 1000,
+            'times-0-weekday': 1, 'times-0-start_period': Period.objects.get(number=1).pk,
+            'times-0-end_period': Period.objects.get(number=2).pk,
+        })
+        self.assertRedirects(response, reverse('timetable') + f'?term={self.previous.pk}')
+        self.assertEqual(Course.objects.get(name='英文').term, self.previous)
+
+    def test_conflicts_only_within_same_term(self):
+        self.course('微積分', self.previous, weekday=1, start=1, end=2)
+        data = {
+            'term': self.term.pk, 'name': '經濟學', 'credits': 3, 'category': 'required',
+            'times-TOTAL_FORMS': 1, 'times-INITIAL_FORMS': 0, 'times-MIN_NUM_FORMS': 1, 'times-MAX_NUM_FORMS': 1000,
+            'times-0-weekday': 1, 'times-0-start_period': Period.objects.get(number=1).pk,
+            'times-0-end_period': Period.objects.get(number=2).pk,
+        }
+        response = self.client.post(reverse('course_create'), data)
+        self.assertEqual(response.status_code, 302)  # 和上學期的課同時段不算衝堂
+        data.update(name='會計學')
+        response = self.client.post(reverse('course_create'), data)
+        self.assertContains(response, 'overlaps with')
+
+    def test_course_without_term_shows_in_default_term(self):
+        self.course('社團', None)
+        self.assertContains(self.client.get(reverse('timetable')), '社團')
+        self.assertNotContains(self.client.get(reverse('timetable'), {'term': self.previous.pk}), '社團')
+
+    def test_catalog_course_uses_offering_term(self):
+        offering = self.place(self.offering(), {(2, 1)}, self.room, Offering.Status.PUBLISHED)
+        self.client.post(reverse('scheduling:catalog'), {'offering': offering.pk, 'group': ''})
+        self.assertEqual(Course.objects.get(offering=offering).term, self.term)
+
+    def test_shared_page_can_switch_term(self):
+        from schedule.models import ShareLink
+
+        self.course('微積分', self.previous)
+        link = ShareLink.objects.create(user=self.student, is_active=True)
+        url = reverse('shared_timetable', args=[link.token])
+        self.client.logout()
+        self.assertNotContains(self.client.get(url), '微積分')
+        self.assertContains(self.client.get(url, {'term': self.previous.pk}), '微積分')
+
+    def test_term_with_personal_courses_cannot_be_deleted(self):
+        self.course('微積分', self.previous)
+        self.client.force_login(self.scheduler)
+        self.client.post(reverse('scheduling:manage_delete', args=['terms', self.previous.pk]))
+        self.assertTrue(Term.objects.filter(pk=self.previous.pk).exists())

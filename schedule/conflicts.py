@@ -10,12 +10,14 @@ def overlaps(weekday_a, start_a, end_a, weekday_b, start_b, end_b):
     return weekday_a == weekday_b and start_a <= end_b and start_b <= end_a
 
 
-def find_conflicts(owner, new_times, exclude_course=None):
-    """找出 new_times 與使用者其他課程的衝堂。
+def find_conflicts(owner, new_times, exclude_course=None, term=None):
+    """找出 new_times 與使用者同一學期其他課程的衝堂。
 
     new_times 為 (星期, 開始節次編號, 結束節次編號) 的清單；回傳給使用者看的說明文字。
     """
-    others = CourseTime.objects.filter(course__owner=owner).select_related(
+    from .terms import courses_in_term
+
+    others = CourseTime.objects.filter(course__in=courses_in_term(owner, term)).select_related(
         'course', 'start_period', 'end_period'
     )
     if exclude_course is not None and exclude_course.pk:

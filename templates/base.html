@@ -23,7 +23,12 @@
         {% endif %}
       </form>
       {% if user.is_authenticated %}
-        <span class="nav-user">{{ user.username }}</span>
+        {% if is_staff_role %}
+          <span class="nav-user">{{ user.username }}</span>
+        {% else %}
+          {# 學生點自己的帳號名稱進入個人設定（班級） #}
+          <a class="nav-user" href="{% url 'profile' %}" title="{% translate 'Settings' %}">{{ user.username }}</a>
+        {% endif %}
         {% if is_scheduler %}<a href="{% url 'scheduling:dashboard' %}">{% translate "Scheduling" %}</a>{% endif %}
         {% if is_teacher %}<a href="{% url 'scheduling:teacher_home' %}">{% translate "Teaching" %}</a>{% endif %}
         {% if not is_staff_role %}

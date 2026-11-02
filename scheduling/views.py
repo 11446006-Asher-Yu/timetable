@@ -20,7 +20,7 @@ from .forms import (
 )
 from .models import (
     TEACHERS, AvailabilitySlot, ChangeRequest, ChangeRequestSlot, ClassGroup, Classroom, Offering, OfferingTime,
-    TeacherAvailability, TeacherInvitation, Term, WaitlistEntry, default_expiry,
+    TeacherAvailability, TeacherInvitation, Term, WaitlistEntry, class_group_of, default_expiry,
 )
 from .roles import display_name, scheduler_required, teacher_required
 from .rules import availability_map, busy_cells, cells_to_runs, check_schedule, free_classrooms, runs_of
@@ -119,7 +119,8 @@ def dashboard(request):
 
 SIMPLE_MODELS = {
     'classrooms': (Classroom, ClassroomForm, lambda o: f'{o.get_kind_display()} · {o.capacity}'),
-    'groups': (ClassGroup, ClassGroupForm, lambda o: ''),
+    'groups': (ClassGroup, ClassGroupForm, lambda o: ngettext('%(count)s student', '%(count)s students', o.students.count())
+               % {'count': o.students.count()}),
     'terms': (Term, TermForm, None),
 }
 
@@ -163,7 +164,7 @@ def manage_delete(request, kind, pk):
         item.delete()
         messages.success(request, gettext('Deleted “%(name)s”.') % {'name': item})
     except ProtectedError:
-        messages.error(request, gettext('“%(name)s” is used by an offering and can’t be deleted.') % {'name': item})
+        messages.error(request, gettext('“%(name)s” is still in use and can’t be deleted.') % {'name': item})
     return redirect('scheduling:manage', kind=kind)
 
 
@@ -617,7 +618,12 @@ def catalog(request):
             Q(name__icontains=query) | Q(teacher__first_name__icontains=query)
             | Q(teacher__last_name__icontains=query) | Q(teacher__username__icontains=query)
         )
-    group_id = request.GET.get('group', '')
+    # 預設只看自己班的課；選「所有班級」會送出空的 group
+    own_group = class_group_of(request.user)
+    if 'group' in request.GET:
+        group_id = request.GET['group']
+    else:
+        group_id = str(own_group.pk) if own_group else ''
     if group_id.isdigit():
         offerings = offerings.filter(class_group_id=group_id)
     category = request.GET.get('category', '')
@@ -642,7 +648,7 @@ def catalog(request):
             return redirect(request.get_full_path())
         if request.user.courses.filter(offering=offering).exists():
             return redirect(request.get_full_path())
-        conflicts = find_conflicts(request.user, runs_of(offering))
+        conflicts = find_conflicts(request.user, runs_of(offering), term=offering.term)
         if conflicts and not request.POST.get('allow_conflict'):
             conflict_offering = offering
         else:
@@ -671,7 +677,10 @@ def catalog(request):
         'terms': Term.objects.filter(published_at__isnull=False),
         'offerings': offerings,
         'added': added,
-        'groups': ClassGroup.objects.filter(offerings__term=term).distinct() if term else [],
+        'groups': ClassGroup.objects.filter(
+            Q(offerings__term=term) | Q(pk=own_group.pk if own_group else None)
+        ).distinct() if term else [],
+        'own_group': own_group,
         'categories': Course.Category.choices,
         'query': query, 'group_id': group_id, 'category': category,
         'conflicts': conflicts, 'conflict_offering': conflict_offering,

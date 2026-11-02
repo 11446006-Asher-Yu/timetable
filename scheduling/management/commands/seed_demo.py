@@ -1,6 +1,6 @@
 """建立 Demo 用的示範資料：python manage.py seed_demo
 
-會建立三個能登入的示範帳號（學生、排課人員、老師）、學生的個人課表，以及一個學期的排課資料。
+會建立三個能登入的示範帳號（學生、排課人員、老師）、學生兩個學期的個人課表，以及一個學期的排課資料。
 可以重複執行，每次都會把示範資料恢復成初始狀態，不影響其他帳號。
 
 示範帳號的密碼是公開的，所以只能在本機開發模式（DEBUG=True）使用，正式網站要加 --force 才會執行。
@@ -19,7 +19,7 @@ from django.utils import timezone
 from schedule.models import Course, CourseTime, Period, ShareLink
 from scheduling.models import (
     SCHEDULERS, TEACHERS, AvailabilitySlot, ChangeRequest, ChangeRequestSlot, ClassGroup, Classroom, Offering,
-    TeacherAvailability, TeacherInvitation, Term,
+    StudentProfile, TeacherAvailability, TeacherInvitation, Term,
 )
 from scheduling.enrollment import add_to_timetable
 from scheduling.rules import cells_to_runs, check_schedule
@@ -40,6 +40,13 @@ OTHER_TEACHERS = [('demo_lee', '李老師（示範）'), ('demo_chang', '張老�
 # 已經加入「專題討論」、把名額坐滿的同學，不能登入
 CLASSMATES = ['demo_classmate1', 'demo_classmate2']
 
+# 學生的班級：(帳號, 班級)
+STUDENT_GROUPS = [('demo_student', '資管一甲'), ('demo_classmate1', '資管三甲'), ('demo_classmate2', '資管三甲')]
+
+# 學期：115-1 是目前的學期（排課資料都在這裡）；114-2 是上學期，只用來示範課表切換學期
+CURRENT_TERM = '115-1'
+PREVIOUS_TERM = '114-2'
+
 # 學生的個人課表：(課名, 類別, 學分, 教室, 老師, [(星期, 起, 迄)])
 PERSONAL_COURSES = [
     ('經濟學', 'required', 3, '五教 201', '林老師', [(1, 2, 4)]),
@@ -48,6 +55,15 @@ PERSONAL_COURSES = [
     ('台灣文化概論', 'general', 2, '中正堂', '許老師', [(5, 3, 4)]),
     ('體育（羽球）', 'pe', 1, '體育館', '鄭老師', [(4, 7, 8)]),
     ('日文（一）', 'other', 2, '七教 105', '蔡老師', [(1, 9, 10)]),
+]
+
+# 上學期（114-2）的個人課表
+PREVIOUS_COURSES = [
+    ('微積分（二）', 'required', 3, '五教 101', '黃老師', [(1, 2, 4)]),
+    ('程式設計入門', 'required', 3, '電腦教室 A', '王老師', [(2, 6, 8)]),
+    ('英文（二）', 'other', 2, '七教 203', '何老師', [(3, 3, 4)]),
+    ('體育（籃球）', 'pe', 1, '體育館', '鄭老師', [(4, 7, 8)]),
+    ('公民與社會', 'general', 2, '中正堂', '許老師', [(5, 3, 4)]),
 ]
 
 ROOMS = [('六教 601', 60, 'general'), ('六教 602', 60, 'general'), ('五教 302', 45, 'general'),
@@ -84,8 +100,10 @@ class Command(BaseCommand):
 
         with transaction.atomic():
             users = self.create_users()
-            self.create_personal_timetable(users['demo_student'])
-            self.create_scheduling(users)
+            term, previous = self.create_terms()
+            self.assign_class_groups(users)
+            self.create_personal_timetable(users['demo_student'], term, previous)
+            self.create_scheduling(users, term)
 
         self.stdout.write(self.style.SUCCESS('Demo data is ready. 示範資料已建立。'))
         self.stdout.write('')
@@ -129,29 +147,45 @@ class Command(BaseCommand):
             users[username] = user
         return users
 
-    # ===== 學生的個人課表 =====
-
-    def create_personal_timetable(self, student):
-        periods = {p.number: p for p in Period.objects.all()}
-        student.courses.all().delete()
-        for name, category, credits, room, teacher, times in PERSONAL_COURSES:
-            course = Course.objects.create(
-                owner=student, name=name, category=category, credits=credits, classroom=room, teacher=teacher,
-            )
-            CourseTime.objects.bulk_create([
-                CourseTime(course=course, weekday=w, start_period=periods[s], end_period=periods[e])
-                for w, s, e in times
-            ])
-        ShareLink.objects.update_or_create(user=student, defaults={'is_active': True})
-
-    # ===== 排課 =====
-
-    def create_scheduling(self, users):
-        term, _ = Term.objects.update_or_create(name='115-1', defaults={
+    def create_terms(self):
+        term, _ = Term.objects.update_or_create(name=CURRENT_TERM, defaults={
             'availability_open': True,
             'availability_deadline': timezone.localdate() + timedelta(days=7),
             'published_at': timezone.now(),
         })
+        previous, _ = Term.objects.update_or_create(name=PREVIOUS_TERM, defaults={
+            'availability_open': False,
+            'availability_deadline': None,
+            'published_at': timezone.now() - timedelta(days=180),
+        })
+        return term, previous
+
+    def assign_class_groups(self, users):
+        for username, group in STUDENT_GROUPS:
+            StudentProfile.objects.update_or_create(
+                user=users[username], defaults={'class_group': ClassGroup.objects.get_or_create(name=group)[0]}
+            )
+
+    # ===== 學生的個人課表 =====
+
+    def create_personal_timetable(self, student, term, previous):
+        periods = {p.number: p for p in Period.objects.all()}
+        student.courses.all().delete()
+        for course_term, courses in ((term, PERSONAL_COURSES), (previous, PREVIOUS_COURSES)):
+            for name, category, credits, room, teacher, times in courses:
+                course = Course.objects.create(
+                    owner=student, term=course_term, name=name, category=category, credits=credits,
+                    classroom=room, teacher=teacher,
+                )
+                CourseTime.objects.bulk_create([
+                    CourseTime(course=course, weekday=w, start_period=periods[s], end_period=periods[e])
+                    for w, s, e in times
+                ])
+        ShareLink.objects.update_or_create(user=student, defaults={'is_active': True})
+
+    # ===== 排課 =====
+
+    def create_scheduling(self, users, term):
         rooms = {}
         for name, capacity, kind in ROOMS:
             rooms[name], _ = Classroom.objects.update_or_create(name=name, defaults={'capacity': capacity, 'kind': kind})

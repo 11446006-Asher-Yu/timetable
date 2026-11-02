@@ -748,8 +748,8 @@ msgstr "已開放 %(term)s 的可授課時段填寫，並通知所有老師。"
 msgid "Availability form for %(term)s is closed."
 msgstr "已關閉 %(term)s 的可授課時段填寫。"
 
-msgid "“%(name)s” is used by an offering and can’t be deleted."
-msgstr "「%(name)s」已有開課使用，不能刪除。"
+msgid "“%(name)s” is still in use and can’t be deleted."
+msgstr "「%(name)s」還在使用中，不能刪除。"
 
 # 開課
 msgid "No offerings in this term yet."
@@ -1289,3 +1289,35 @@ msgstr "候補紀錄"
 
 msgid "waitlist"
 msgstr "候補名單"
+
+# 學生班級與課表學期
+msgid "Settings"
+msgstr "個人設定"
+
+msgid "Set your class group in"
+msgstr "到"
+
+msgid "to see your class’s courses first."
+msgstr "設定班級，就會先顯示自己班的課。"
+
+msgid "Showing courses for your class, %(group)s. Choose “All class groups” to see everything."
+msgstr "目前只顯示你的班級「%(group)s」的課；選「所有班級」可以看全部。"
+
+msgid "The catalog shows your class’s courses first. You can change it later."
+msgstr "課程目錄會先顯示你班上的課，之後可以在個人設定修改。"
+
+msgid "student profile"
+msgstr "學生資料"
+
+msgid "student profiles"
+msgstr "學生資料"
+
+msgid "Username"
+msgstr "帳號"
+
+msgid "Your settings have been saved."
+msgstr "已儲存個人設定。"
+
+msgid "%(count)s student"
+msgid_plural "%(count)s students"
+msgstr[0] "%(count)s 位學生"

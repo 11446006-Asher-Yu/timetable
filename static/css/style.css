@@ -1341,7 +1341,34 @@ a {
 }
 
 .catalog-filter {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
+}
+
+.catalog-hint {
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+}
+
+/* 個人設定 */
+.profile-info {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0 0 20px;
+}
+
+.profile-info dt {
+  color: var(--color-muted);
+}
+
+.profile-info dd {
+  margin: 0;
+}
+
+a.nav-user {
+  color: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
 }
 
 .catalog-filter input,

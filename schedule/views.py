@@ -9,11 +9,13 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext
 
 from scheduling import enrollment
+from scheduling.models import StudentProfile, Term
 from scheduling.roles import home_url_name
 
 from .conflicts import assign_lanes, find_conflicts
-from .forms import CourseForm, CourseTimeFormSet, OfficialCourseForm, SignUpForm
+from .forms import CourseForm, CourseTimeFormSet, OfficialCourseForm, ProfileForm, SignUpForm
 from .models import Course, CourseTime, Period, ShareLink
+from .terms import courses_in_term, selected_term
 
 
 def home(request):
@@ -35,8 +37,10 @@ def signup(request):
     next_url = _safe_next(request)
     if request.user.is_authenticated:
         return redirect(next_url or 'timetable')
+    # 老師從邀請連結來註冊，不用選班級
+    require_class_group = not next_url.startswith(reverse('home') + 'invite/')
     if request.method == 'POST':
-        form = SignUpForm(request.POST)
+        form = SignUpForm(request.POST, require_class_group=require_class_group)
         if form.is_valid():
             user = form.save()
             login(request, user)  # 註冊完直接登入
@@ -45,8 +49,20 @@ def signup(request):
             )
             return redirect(next_url or 'timetable')
     else:
-        form = SignUpForm()
+        form = SignUpForm(require_class_group=require_class_group)
     return render(request, 'registration/signup.html', {'form': form, 'next': next_url})
+
+
+@login_required
+def profile(request):
+    """個人設定：目前只有班級。"""
+    student, _created = StudentProfile.objects.get_or_create(user=request.user)
+    form = ProfileForm(request.POST or None, instance=student)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, gettext('Your settings have been saved.'))
+        return redirect('profile')
+    return render(request, 'registration/profile.html', {'form': form})
 
 
 # 課表至少顯示到第 8 節，有更晚的課再往下延伸
@@ -134,12 +150,13 @@ def course_details(courses, can_edit):
     return details
 
 
-def timetable_context(owner, can_edit):
-    """「我的課表」與分享頁共用的資料。"""
-    courses = list(owner.courses.prefetch_related('times__start_period', 'times__end_period'))
+def timetable_context(owner, can_edit, term):
+    """「我的課表」與分享頁共用的資料；只顯示 term 這個學期的課。"""
+    in_term = courses_in_term(owner, term)
+    courses = list(in_term.prefetch_related('times__start_period', 'times__end_period'))
     subtotals = {
         row['category']: row['credits']
-        for row in owner.courses.values('category').annotate(credits=Sum('credits'))
+        for row in in_term.values('category').annotate(credits=Sum('credits'))
     }
     categories = [
         {
@@ -151,6 +168,8 @@ def timetable_context(owner, can_edit):
     ]
     return {
         'owner': owner,
+        'term': term,
+        'terms': Term.objects.all(),
         'courses': courses,
         'grid': build_grid(courses),
         'details': course_details(courses, can_edit=can_edit),
@@ -161,7 +180,8 @@ def timetable_context(owner, can_edit):
 
 @login_required
 def timetable(request):
-    return render(request, 'schedule/timetable.html', timetable_context(request.user, can_edit=True))
+    return render(request, 'schedule/timetable.html',
+                  timetable_context(request.user, can_edit=True, term=selected_term(request)))
 
 
 @login_required
@@ -188,7 +208,14 @@ def share_settings(request):
 def shared_timetable(request, token):
     # 停止分享或換過連結時一律 404，不透露這個連結是否存在過
     link = get_object_or_404(ShareLink.objects.select_related('user'), token=token, is_active=True)
-    return render(request, 'schedule/shared_timetable.html', timetable_context(link.user, can_edit=False))
+    return render(request, 'schedule/shared_timetable.html',
+                  timetable_context(link.user, can_edit=False, term=selected_term(request)))
+
+
+def _timetable_url(course):
+    """存檔、刪除後回到這門課所在學期的課表。"""
+    url = reverse('timetable')
+    return f'{url}?term={course.term_id}' if course.term_id else url
 
 
 def _edit_course(request, course):
@@ -206,7 +233,8 @@ def _edit_course(request, course):
                 for data in formset.cleaned_data
                 if data and not data.get('DELETE')
             ]
-            conflicts = find_conflicts(course.owner, new_times, exclude_course=course)
+            conflicts = find_conflicts(course.owner, new_times, exclude_course=course,
+                                       term=form.cleaned_data.get('term'))
             # 衝堂不擋下，但要使用者勾選確認後才儲存（例如旁聽、隔週上課）
             if not conflicts or request.POST.get('allow_conflict'):
                 with transaction.atomic():
@@ -215,7 +243,7 @@ def _edit_course(request, course):
                     formset.save()
                 text = gettext('Added “%(name)s”.') if is_new else gettext('Updated “%(name)s”.')
                 messages.success(request, text % {'name': course.name})
-                return redirect('timetable')
+                return redirect(_timetable_url(course))
     else:
         form = CourseForm(instance=course)
         formset = CourseTimeFormSet(instance=course)
@@ -233,13 +261,14 @@ def _edit_official_course(request, course):
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, gettext('Updated “%(name)s”.') % {'name': course.name})
-        return redirect('timetable')
+        return redirect(_timetable_url(course))
     return render(request, 'schedule/course_form.html', {'form': form, 'official': course, 'is_new': False})
 
 
 @login_required
 def course_create(request):
-    return _edit_course(request, Course(owner=request.user))
+    # 新課程預設放在目前正在看的學期（課表的「新增課程」會帶 ?term=）
+    return _edit_course(request, Course(owner=request.user, term=selected_term(request)))
 
 
 @login_required
@@ -253,11 +282,11 @@ def course_update(request, pk):
 def course_delete(request, pk):
     course = get_object_or_404(Course, pk=pk, owner=request.user)
     if request.method == 'POST':
-        name, offering = course.name, course.offering
+        name, offering, back = course.name, course.offering, _timetable_url(course)
         course.delete()
         messages.success(request, gettext('Deleted “%(name)s”.') % {'name': name})
         # 刪掉正式課程＝退選，空出的名額讓候補第一位遞補
         if offering is not None:
             enrollment.promote(offering, request.build_absolute_uri(reverse('timetable')))
-        return redirect('timetable')
+        return redirect(back)
     return render(request, 'schedule/course_confirm_delete.html', {'course': course})

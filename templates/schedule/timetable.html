@@ -8,10 +8,11 @@
   <div class="page-heading">
     <h1>{% translate "My timetable" %}</h1>
     <div class="toolbar">
+      {% include 'scheduling/_term_picker.html' %}
       <a href="{% url 'share_settings' %}" class="button button-outline">{% translate "Share" %}</a>
       <button type="button" class="button button-outline" id="print-button">{% translate "Print" %}</button>
       <button type="button" class="button button-outline" id="export-button">{% translate "Export image" %}</button>
-      <a href="{% url 'course_create' %}" class="button">{% translate "+ Add course" %}</a>
+      <a href="{% url 'course_create' %}{% if term %}?term={{ term.pk }}{% endif %}" class="button">{% translate "+ Add course" %}</a>
     </div>
   </div>
 

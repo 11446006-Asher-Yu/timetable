@@ -40,6 +40,11 @@ class Term(models.Model):
         return self.availability_deadline is None or timezone.localdate() <= self.availability_deadline
 
 
+def default_term():
+    """學生課表預設顯示的學期：最新一個已公布的學期，都還沒公布就用最新的學期；沒有學期時回傳 None。"""
+    return Term.objects.filter(published_at__isnull=False).first() or Term.objects.first()
+
+
 class Classroom(models.Model):
     class Kind(models.TextChoices):
         GENERAL = 'general', _('General classroom')
@@ -69,6 +74,28 @@ class ClassGroup(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class StudentProfile(models.Model):
+    """學生的班級；註冊時選，之後可在個人設定修改。"""
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_profile')
+    class_group = models.ForeignKey(
+        ClassGroup, on_delete=models.SET_NULL, null=True, blank=True, related_name='students',
+        verbose_name=_('class group'),
+    )
+
+    class Meta:
+        verbose_name = _('student profile')
+        verbose_name_plural = _('student profiles')
+
+    def __str__(self):
+        return f'{self.user} · {self.class_group or "—"}'
+
+
+def class_group_of(user):
+    profile = StudentProfile.objects.filter(user=user).select_related('class_group').first()
+    return profile.class_group if profile else None
 
 
 class Offering(models.Model):
