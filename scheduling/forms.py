@@ -58,6 +58,27 @@ class OfferingForm(forms.ModelForm):
         fields = ['term', 'name', 'credits', 'category', 'class_group', 'teacher',
                   'periods_per_week', 'room_kind', 'capacity']
 
+    # 送給老師之後不能換人、換班、換學期（否則沒經過新老師確認就能公布）；公布後只能改人數上限
+    LOCKED_AFTER_SENT = ['term', 'teacher', 'class_group']
+    LOCKED_AFTER_PUBLISH = ['name', 'credits', 'category', 'periods_per_week', 'room_kind']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.locked_note = ''
+        status = self.instance.status if self.instance.pk else Offering.Status.DRAFT
+        if status == Offering.Status.PUBLISHED:
+            locked = self.LOCKED_AFTER_SENT + self.LOCKED_AFTER_PUBLISH
+            self.locked_note = gettext('This class is published. Only the capacity can be changed; '
+                                       'unpublish it to change anything else.')
+        elif status != Offering.Status.DRAFT:
+            locked = self.LOCKED_AFTER_SENT
+            self.locked_note = gettext('This class has been sent to the teacher. To change the term, teacher or '
+                                       'class group, save it as a draft on the scheduling board first.')
+        else:
+            locked = []
+        for name in locked:
+            self.fields[name].disabled = True
+
     def clean(self):
         cleaned = super().clean()
         capacity, room_kind = cleaned.get('capacity'), cleaned.get('room_kind')

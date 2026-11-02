@@ -7,6 +7,7 @@
 <section class="card">
   <div class="page-heading">
     <h1>{% blocktranslate with group=group.name %}{{ group }} students{% endblocktranslate %}</h1>
+    {% include 'scheduling/_term_picker.html' %}
     <span class="muted">{% blocktranslate count counter=students|length %}{{ counter }} student{% plural %}{{ counter }} students{% endblocktranslate %}</span>
   </div>
   {% if is_scheduler %}{% include 'scheduling/_scheduler_nav.html' with active='groups' %}{% endif %}

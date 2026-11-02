@@ -10,6 +10,7 @@
     <p class="conflict-notice">{% translate "No teachers yet. Invite teachers first so you can assign them." %}
       <a href="{% url 'scheduling:teachers' %}">{% translate "Teachers" %}</a></p>
   {% endif %}
+  {% if form.locked_note %}<p class="conflict-notice">{{ form.locked_note }}</p>{% endif %}
   <form method="post" novalidate>
     {% csrf_token %}
     {% include '_form_fields.html' %}

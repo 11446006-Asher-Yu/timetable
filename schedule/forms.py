@@ -56,6 +56,8 @@ class ProfileForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['name'].initial = self.instance.user.first_name
+        # 和註冊時一樣：有班級可選就必填
+        self.fields['class_group'].required = ClassGroup.objects.exists()
         self.order_fields(['name', 'class_group'])
 
     def save(self, commit=True):

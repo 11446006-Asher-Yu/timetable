@@ -100,6 +100,15 @@ def waitlist_promoted(student, offering, link):
     ))
 
 
+def course_withdrawn(student, offering, link):
+    _send([student.email], lambda: (
+        gettext('%(course)s was withdrawn') % {'course': offering.name},
+        gettext('“%(course)s” is no longer published, so it has been removed from your timetable. '
+                'If it is published again, you can add it from the catalog.\n\n%(link)s')
+        % {'course': offering.name, 'link': link},
+    ))
+
+
 def published(term, link):
     _send(_emails_of(TEACHERS), lambda: (
         gettext('The %(term)s timetable is published') % {'term': term.name},

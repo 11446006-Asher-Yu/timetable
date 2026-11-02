@@ -109,6 +109,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        # SQLite 沒有 select_for_update：交易一開始就取得寫入鎖，兩人同時搶最後一個名額時依序處理；
+        # 等鎖最多 20 秒，不會直接出現「database is locked」
+        'OPTIONS': {'transaction_mode': 'IMMEDIATE', 'timeout': 20},
     }
 }
 

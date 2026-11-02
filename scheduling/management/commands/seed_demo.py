@@ -1,7 +1,8 @@
 """建立 Demo 用的示範資料：python manage.py seed_demo
 
 會建立三個能登入的示範帳號（學生、排課人員、老師）、學生兩個學期的個人課表，以及一個學期的排課資料。
-可以重複執行，每次都會把示範資料恢復成初始狀態，不影響其他帳號。
+可以重複執行，每次都會把示範資料恢復成初始狀態。只刪除、重建示範帳號和示範老師的資料，
+不刪其他帳號或其他老師的開課；但會更新 115-1、114-2 兩個學期與示範教室、班級的設定。
 
 示範帳號的密碼是公開的，所以只能在本機開發模式（DEBUG=True）使用，正式網站要加 --force 才會執行。
 """
@@ -198,11 +199,12 @@ class Command(BaseCommand):
         self.availability(users['demo_chang'], term, avoid=[(w, 1) for w in range(1, 6)])
         self.availability(users['demo_chen'], term, submitted=False)
 
-        TeacherInvitation.objects.filter(email__endswith='@example.com', accepted_at__isnull=True).delete()
+        TeacherInvitation.objects.filter(email='demo_lin@example.com', accepted_at__isnull=True).delete()
         TeacherInvitation.objects.create(name='林老師（示範）', email='demo_lin@example.com',
                                          invited_by=users['demo_scheduler'])
 
-        Offering.objects.filter(term=term).delete()
+        demo_teachers = ['demo_teacher'] + [username for username, _name in OTHER_TEACHERS]
+        Offering.objects.filter(term=term, teacher__username__in=demo_teachers).delete()
         for name, group, teacher, credits, category, periods, kind, capacity, cells, room, status in OFFERINGS:
             offering = Offering.objects.create(
                 term=term, name=name, class_group=groups[group], teacher=users[teacher], credits=credits,

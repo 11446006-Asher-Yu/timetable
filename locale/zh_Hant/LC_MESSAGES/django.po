@@ -1344,3 +1344,30 @@ msgstr[0] "共 %(counter)s 位學生"
 
 msgid "Students"
 msgstr "學生名單"
+
+# 程式檢查修正
+msgid "%(course)s was withdrawn"
+msgstr "「%(course)s」已撤回公布"
+
+msgid "“%(course)s” is no longer published, so it has been removed from your timetable. If it is published again, you can add it from the catalog.\n\n%(link)s"
+msgstr "「%(course)s」已撤回公布，所以已從你的課表移除。之後重新公布時，可以再從課程目錄加入。\n\n%(link)s"
+
+msgid "This class is published. Only the capacity can be changed; unpublish it to change anything else."
+msgstr "這門課已公布，只能修改人數上限；其他欄位要先撤回公布才能修改。"
+
+msgid "This class has been sent to the teacher. To change the term, teacher or class group, save it as a draft on the scheduling board first."
+msgstr "這門課已送給老師確認。要更換學期、老師或班級，請先在排課看板改存成草稿。"
+
+msgid "%(counter)s student has added this class. Unpublishing removes it from their timetable. Continue?"
+msgid_plural "%(counter)s students have added this class. Unpublishing removes it from their timetables. Continue?"
+msgstr[0] "已有 %(counter)s 位學生加入這門課，撤回公布會從他們的課表移除這門課。確定要撤回嗎？"
+
+msgid "Rescheduled by the scheduler."
+msgstr "排課人員已重新排課。"
+
+msgid "“%(name)s” has already been rescheduled. The request was closed without changing the class."
+msgstr "「%(name)s」已經重新排過，這筆申請已直接結案，課程不受影響。"
+
+msgid "Unpublished “%(name)s”. It was removed from %(count)s student’s timetable and they were notified."
+msgid_plural "Unpublished “%(name)s”. It was removed from %(count)s students’ timetables and they were notified."
+msgstr[0] "已撤回公布「%(name)s」，並從 %(count)s 位學生的課表移除、寄信通知。"

@@ -37,12 +37,15 @@
                 <div class="muted">{{ offering.teacher.get_full_name|default:offering.teacher.username }} · {{ offering.time_list|join:", "|default:"—" }} · {{ offering.classroom.name|default:"—" }}</div>
               </div>
               {% if value == 'published' %}
-                <form method="post" class="inline-form">
+                {% with enrolled=offering.enrolled_count %}
+                <form method="post" class="inline-form"
+                      {% if enrolled %}onsubmit="return confirm('{% blocktranslate count counter=enrolled %}{{ counter }} student has added this class. Unpublishing removes it from their timetable. Continue?{% plural %}{{ counter }} students have added this class. Unpublishing removes it from their timetables. Continue?{% endblocktranslate %}')"{% endif %}>
                   {% csrf_token %}
                   <input type="hidden" name="action" value="unpublish">
                   <input type="hidden" name="offering" value="{{ offering.pk }}">
                   <button type="submit" class="link-button danger-link">{% translate "Unpublish" %}</button>
                 </form>
+                {% endwith %}
               {% endif %}
             </li>
           {% endfor %}

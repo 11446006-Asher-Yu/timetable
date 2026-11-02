@@ -13,6 +13,7 @@ from django.utils.translation import gettext, ngettext
 from django.views.decorators.http import require_POST
 
 from schedule.conflicts import find_conflicts
+from schedule.terms import selected_term
 from schedule.models import Course, CourseTime, Period
 
 from . import emails, enrollment
@@ -21,7 +22,7 @@ from .forms import (
 )
 from .models import (
     TEACHERS, AvailabilitySlot, ChangeRequest, ChangeRequestSlot, ClassGroup, Classroom, Offering, OfferingTime,
-    TeacherAvailability, TeacherInvitation, Term, WaitlistEntry, class_group_of, default_expiry, default_term,
+    TeacherAvailability, TeacherInvitation, Term, WaitlistEntry, class_group_of, default_expiry,
 )
 from .roles import can_view_class, display_name, scheduler_required, teacher_required
 from .rules import availability_map, busy_cells, cells_to_runs, check_schedule, free_classrooms, runs_of
@@ -80,6 +81,12 @@ def current_term(request, default_published=False):
     if term and request.GET.get('term'):
         request.session['term_id'] = term.pk
     return term
+
+
+def posted_offering_id(request):
+    """表單送來的開課編號；不是數字（被竄改）時回傳 None，查詢結果就是 404。"""
+    value = request.POST.get('offering', '')
+    return int(value) if value.isdigit() else None
 
 
 def absolute(request, name, *args):
@@ -317,6 +324,11 @@ def board(request, pk):
                 offering.status = Offering.Status.DRAFT
                 offering.save()
             if action == 'send':
+                # 已經重新排好送出：還掛著的調整申請一併結案，避免之後被拿來改動狀態
+                offering.change_requests.filter(status=ChangeRequest.Status.OPEN).update(
+                    status=ChangeRequest.Status.APPROVED, resolved_at=timezone.now(),
+                    response=gettext('Rescheduled by the scheduler.'),
+                )
                 _send_for_confirmation(request, [offering])
                 messages.success(request, gettext('Sent “%(name)s” to %(teacher)s for confirmation.')
                                  % {'name': offering.name, 'teacher': display_name(offering.teacher)})
@@ -367,6 +379,15 @@ def _describe_cells(cells):
 def request_resolve(request, pk):
     change = get_object_or_404(ChangeRequest.objects.select_related('offering'), pk=pk, status=ChangeRequest.Status.OPEN)
     offering = change.offering
+    if offering.status != Offering.Status.CHANGE_REQUESTED:
+        # 課程已經在排課看板重新排過（甚至已確認、公布）：只結案，不動課程狀態
+        change.status = ChangeRequest.Status.APPROVED
+        change.response = gettext('Rescheduled by the scheduler.')
+        change.resolved_at = timezone.now()
+        change.save()
+        messages.info(request, gettext('“%(name)s” has already been rescheduled. The request was closed '
+                                       'without changing the class.') % {'name': offering.name})
+        return redirect('scheduling:requests')
     if request.POST.get('decision') == 'approve':
         change.status = ChangeRequest.Status.APPROVED
         change.response = gettext('Approved. A new schedule will be sent to you.')
@@ -428,14 +449,13 @@ def publish(request):
     offerings = offerings_for(term) if term else Offering.objects.none()
     if request.method == 'POST' and term:
         if request.POST.get('action') == 'unpublish':
-            offering = get_object_or_404(Offering, pk=request.POST.get('offering'), term=term,
+            offering = get_object_or_404(Offering, pk=posted_offering_id(request), term=term,
                                          status=Offering.Status.PUBLISHED)
-            offering.status = Offering.Status.DRAFT
-            offering.save(update_fields=['status', 'updated_at'])
-            # 已加入的學生課程解除連結，學生可以自行修改或刪除；候補名單清空
-            offering.student_courses.update(offering=None)
-            offering.waitlist.all().delete()
-            messages.success(request, gettext('Unpublished “%(name)s”.') % {'name': offering.name})
+            removed = enrollment.withdraw(offering, absolute(request, 'scheduling:catalog'))
+            messages.success(request, ngettext(
+                'Unpublished “%(name)s”. It was removed from %(count)s student’s timetable and they were notified.',
+                'Unpublished “%(name)s”. It was removed from %(count)s students’ timetables and they were notified.',
+                len(removed)) % {'name': offering.name, 'count': len(removed)})
         else:
             # 公布前每門課再跑一次排課規則（含教室容量），不通過的留在「已確認」並說明原因
             ready, problems = [], []
@@ -555,7 +575,7 @@ def teaching(request):
     if request.method == 'POST':
         targets = mine.filter(status=Offering.Status.PENDING)
         if request.POST.get('offering') != 'all':
-            targets = targets.filter(pk=request.POST.get('offering') or 0)
+            targets = targets.filter(pk=posted_offering_id(request))
         count = targets.update(status=Offering.Status.ACCEPTED)
         messages.success(request, ngettext('Accepted %(count)s class.', 'Accepted %(count)s classes.', count) % {'count': count})
         return redirect('scheduling:teaching')
@@ -612,13 +632,15 @@ def class_students(request, pk):
     group = get_object_or_404(ClassGroup, pk=pk)
     if not can_view_class(request.user, group):
         raise PermissionDenied
-    term = default_term()
+    term = selected_term(request)
     students = (
         get_user_model().objects.filter(student_profile__class_group=group)
         .annotate(official=Count('courses', filter=Q(courses__offering__isnull=False, courses__term=term)))
         .order_by('username')
     )
-    return render(request, 'scheduling/class_students.html', {'group': group, 'students': students, 'term': term})
+    return render(request, 'scheduling/class_students.html', {
+        'group': group, 'students': students, 'term': term, 'terms': Term.objects.all(),
+    })
 
 
 # ===== 學生：課程目錄 =====
@@ -649,7 +671,7 @@ def catalog(request):
 
     conflicts, conflict_offering = [], None
     if request.method == 'POST':
-        offering = get_object_or_404(Offering, pk=request.POST.get('offering'), status=Offering.Status.PUBLISHED)
+        offering = get_object_or_404(Offering, pk=posted_offering_id(request), status=Offering.Status.PUBLISHED)
         action = request.POST.get('action', 'add')
         if action == 'waitlist':
             if offering.seats_left > 0 or request.user.courses.filter(offering=offering).exists():

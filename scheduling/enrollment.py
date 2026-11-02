@@ -35,6 +35,9 @@ def enroll(user, offering):
     """有名額才加入；額滿丟出 CourseFull。加入後若原本在候補名單上就移除。"""
     # 鎖住這門課，避免兩個學生同時搶最後一個名額
     offering = Offering.objects.select_for_update().get(pk=offering.pk)
+    existing = user.courses.filter(offering=offering).first()
+    if existing:  # 重複送出（例如連按兩下）：不要加第二份
+        return existing
     if offering.seats_left <= 0:
         raise CourseFull
     course = add_to_timetable(user, offering)
@@ -49,6 +52,24 @@ def join_waitlist(user, offering):
 
 def leave_waitlist(user, offering):
     WaitlistEntry.objects.filter(offering=offering, student=user).delete()
+
+
+def withdraw(offering, link=''):
+    """撤回公布：從已加入學生的課表移除這門課並寄信通知、清空候補，課程回到草稿；回傳受影響的學生。
+
+    不保留學生的複本，否則重新公布時已加入人數會從 0 算起而超收，學生課表上也會留著過時的時段。
+    """
+    with transaction.atomic():
+        offering = Offering.objects.select_for_update().get(pk=offering.pk)
+        courses = list(offering.student_courses.select_related('owner'))
+        students = [course.owner for course in courses]
+        offering.student_courses.all().delete()
+        offering.waitlist.all().delete()
+        offering.status = Offering.Status.DRAFT
+        offering.save(update_fields=['status', 'updated_at'])
+    for student in students:
+        emails.course_withdrawn(student, offering, link)
+    return students
 
 
 def promote(offering, link=''):

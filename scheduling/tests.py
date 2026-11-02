@@ -274,7 +274,7 @@ class FlowTests(SchedulingTestCase):
         self.assertEqual(offering.status, Offering.Status.PENDING)
         self.assertIn('教室已滿', mail.outbox[-1].body)
 
-    def test_publish_only_accepted_and_unpublish_unlinks_students(self):
+    def test_publish_only_accepted_and_unpublish_removes_from_timetables(self):
         accepted = self.place(self.offering(), {(2, 1), (2, 2), (2, 3)}, self.room, Offering.Status.ACCEPTED)
         pending = self.place(self.offering('統計學', teacher=self.teacher2, group=self.group2),
                              {(3, 1), (3, 2), (3, 3)}, self.room, Offering.Status.PENDING)
@@ -286,9 +286,12 @@ class FlowTests(SchedulingTestCase):
         self.assertEqual(pending.status, Offering.Status.PENDING)
 
         course = Course.objects.create(owner=self.student, name=accepted.name, offering=accepted)
+        mail.outbox.clear()
         self.client.post(reverse('scheduling:publish'), {'action': 'unpublish', 'offering': accepted.pk})
-        course.refresh_from_db()
-        self.assertIsNone(course.offering)
+        self.assertFalse(Course.objects.filter(pk=course.pk).exists())
+        self.assertEqual(mail.outbox[0].to, ['student@example.com'])
+        accepted.refresh_from_db()
+        self.assertEqual(accepted.status, Offering.Status.DRAFT)
 
     def test_send_all_skips_drafts_with_problems(self):
         good = self.place(self.offering(), {(2, 1), (2, 2), (2, 3)}, self.room)
@@ -726,3 +729,122 @@ class ClassStudentsTests(SchedulingTestCase):
         self.place(self.offering('統計學', teacher=self.teacher2, group=self.group2), {(3, 1)}, self.room2)
         self.client.force_login(self.teacher2)
         self.assertEqual(self.client.get(reverse('scheduling:class_students', args=[self.group2.pk])).status_code, 403)
+
+
+class ReviewFixTests(SchedulingTestCase):
+    """程式檢查找到的問題：舊的調整申請、非草稿開課的修改、撤回後再公布、竄改的輸入、重複加入。"""
+
+    def setUp(self):
+        super().setUp()
+        self.term.published_at = timezone.now()
+        self.term.save()
+
+    def test_stale_change_request_does_not_touch_published_offering(self):
+        offering = self.place(self.offering(), {(2, 1), (2, 2), (2, 3)}, self.room, Offering.Status.PUBLISHED)
+        change = ChangeRequest.objects.create(offering=offering, reason='想換時段')
+        self.client.force_login(self.scheduler)
+        self.client.post(reverse('scheduling:request_resolve', args=[change.pk]), {'decision': 'approve'})
+        offering.refresh_from_db()
+        change.refresh_from_db()
+        self.assertEqual(offering.status, Offering.Status.PUBLISHED)
+        self.assertNotEqual(change.status, ChangeRequest.Status.OPEN)
+
+    def test_sending_from_board_closes_open_request(self):
+        offering = self.place(self.offering(), {(2, 1), (2, 2), (2, 3)}, self.room, Offering.Status.CHANGE_REQUESTED)
+        change = ChangeRequest.objects.create(offering=offering, reason='想換時段')
+        self.client.force_login(self.scheduler)
+        self.client.post(reverse('scheduling:board', args=[offering.pk]), {
+            'action': 'send', 'cell': ['4-1', '4-2', '4-3'], 'classroom': self.room.pk,
+        })
+        offering.refresh_from_db()
+        change.refresh_from_db()
+        self.assertEqual(offering.status, Offering.Status.PENDING)
+        self.assertEqual(change.status, ChangeRequest.Status.APPROVED)
+
+    def edit(self, offering, **changes):
+        data = {'term': offering.term_id, 'name': offering.name, 'credits': offering.credits,
+                'category': offering.category, 'class_group': offering.class_group_id,
+                'teacher': offering.teacher_id, 'periods_per_week': offering.periods_per_week,
+                'room_kind': offering.room_kind, 'capacity': offering.capacity}
+        data.update(changes)
+        self.client.force_login(self.scheduler)
+        return self.client.post(reverse('scheduling:offering_edit', args=[offering.pk]), data)
+
+    def test_accepted_offering_keeps_teacher(self):
+        offering = self.place(self.offering(), {(2, 1), (2, 2), (2, 3)}, self.room, Offering.Status.ACCEPTED)
+        self.edit(offering, teacher=self.teacher2.pk, capacity=40)
+        offering.refresh_from_db()
+        self.assertEqual((offering.teacher, offering.capacity), (self.teacher, 40))
+
+    def test_published_offering_only_capacity_changes(self):
+        offering = self.place(self.offering(), {(2, 1), (2, 2), (2, 3)}, self.room, Offering.Status.PUBLISHED)
+        self.client.force_login(self.scheduler)
+        self.assertContains(self.client.get(reverse('scheduling:offering_edit', args=[offering.pk])), 'Only the capacity')
+        self.edit(offering, name='改名', credits=1, capacity=45)
+        offering.refresh_from_db()
+        self.assertEqual((offering.name, offering.credits, offering.capacity), ('網頁程式設計', 3, 45))
+
+    def test_draft_offering_can_change_teacher(self):
+        offering = self.offering()
+        self.edit(offering, teacher=self.teacher2.pk)
+        offering.refresh_from_db()
+        self.assertEqual(offering.teacher, self.teacher2)
+
+    def test_republish_does_not_overfill(self):
+        offering = self.place(self.offering(capacity=1), {(2, 1), (2, 2), (2, 3)}, self.room, Offering.Status.PUBLISHED)
+        self.client.force_login(self.student)
+        self.client.post(reverse('scheduling:catalog'), {'offering': offering.pk})
+        self.client.force_login(self.scheduler)
+        self.client.post(reverse('scheduling:publish'), {'action': 'unpublish', 'offering': offering.pk})
+        offering.status = Offering.Status.PUBLISHED
+        offering.save()
+        other = self.make_user('other')
+        self.client.force_login(other)
+        self.client.post(reverse('scheduling:catalog'), {'offering': offering.pk})
+        self.assertEqual(Course.objects.filter(offering=offering).count(), 1)
+        self.assertFalse(Course.objects.filter(owner=self.student, name=offering.name).exists())
+
+    def test_tampered_offering_id_is_404(self):
+        self.client.force_login(self.student)
+        self.assertEqual(self.client.post(reverse('scheduling:catalog'), {'offering': 'abc'}).status_code, 404)
+        self.client.force_login(self.scheduler)
+        response = self.client.post(reverse('scheduling:publish'), {'action': 'unpublish', 'offering': 'abc'})
+        self.assertEqual(response.status_code, 404)
+        self.client.force_login(self.teacher)
+        response = self.client.post(reverse('scheduling:teaching'), {'offering': 'abc'})
+        self.assertEqual(response.status_code, 302)  # 沒有符合的課，不會出錯
+
+    def test_enroll_twice_keeps_one_copy(self):
+        from .enrollment import enroll
+
+        offering = self.place(self.offering(), {(2, 1), (2, 2), (2, 3)}, self.room, Offering.Status.PUBLISHED)
+        enroll(self.student, offering)
+        enroll(self.student, offering)
+        self.assertEqual(Course.objects.filter(owner=self.student, offering=offering).count(), 1)
+
+    def test_profile_class_group_required(self):
+        StudentProfile.objects.create(user=self.student, class_group=self.group)
+        self.client.force_login(self.student)
+        response = self.client.post(reverse('profile'), {'name': '陳同學', 'class_group': ''})
+        self.assertContains(response, 'This field is required')
+        self.assertEqual(self.student.student_profile.class_group, self.group)
+
+    def test_class_roster_counts_selected_term(self):
+        previous = Term.objects.create(name='114-2', published_at=timezone.now() - timedelta(days=180))
+        StudentProfile.objects.create(user=self.student, class_group=self.group)
+        old = Offering.objects.create(term=previous, name='舊課', teacher=self.teacher, class_group=self.group,
+                                     periods_per_week=3, capacity=50)
+        Course.objects.create(owner=self.student, name='舊課', term=previous, offering=old)
+        self.client.force_login(self.scheduler)
+        url = reverse('scheduling:class_students', args=[self.group.pk])
+        self.assertEqual(self.client.get(url).context['students'][0].official, 0)
+        self.assertEqual(self.client.get(url, {'term': previous.pk}).context['students'][0].official, 1)
+
+    def test_seed_demo_keeps_other_offerings(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        real = self.offering('真實的課')  # 115-1 裡非示範老師的開課
+        call_command('seed_demo', force=True, stdout=StringIO())
+        self.assertTrue(Offering.objects.filter(pk=real.pk).exists())
